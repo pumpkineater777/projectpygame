@@ -1,5 +1,6 @@
 import pygame as pg
 from ingridient import Ingridient
+from rightobject import RightThing
 
 fps = 30
 
@@ -13,6 +14,7 @@ if __name__ == "__main__":
     running = True
     entities = pg.sprite.Group()
     entities.add(Ingridient(40, 40))
+    entities.add(RightThing(600, 100))
     pg.display.flip()
     while running:
         for event in pg.event.get():
