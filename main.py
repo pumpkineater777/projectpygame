@@ -1,16 +1,26 @@
-# This is a sample Python script.
+import pygame as pg
+from ingridient import Ingridient
 
-# Press Shift+F10 to execute it or replace it with your code.
-# Press Double Shift to search everywhere for classes, files, tool windows, actions, and settings.
-
-
-def print_hi(name):
-    # Use a breakpoint in the code line below to debug your script.
-    print(f'Hi, {name}')  # Press Ctrl+F8 to toggle the breakpoint.
+fps = 30
 
 
-# Press the green button in the gutter to run the script.
-if __name__ == '__main__':
-    print_hi('PyCharm')
-
-# See PyCharm help at https://www.jetbrains.com/help/pycharm/
+if __name__ == "__main__":
+    pg.init()
+    size = width, height = 800, 800
+    screen = pg.display.set_mode(size)
+    pg.display.set_caption("Narkotiki")
+    clock = pg.time.Clock()
+    running = True
+    entities = pg.sprite.Group()
+    entities.add(Ingridient(40, 40))
+    pg.display.flip()
+    while running:
+        for event in pg.event.get():
+            if event.type == pg.QUIT:
+                running = False
+        screen.fill("black")
+        entities.update()
+        entities.draw(screen)
+        pg.display.flip()
+        clock.tick(fps)
+    pg.quit()
