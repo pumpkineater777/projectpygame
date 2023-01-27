@@ -10,12 +10,19 @@ class OnlyImage(pg.sprite.Sprite):
     def __init__(self, x, y, name):
         super().__init__()
         self.image = load_image(name)
+        self.name = name
         self.rect = self.image.get_rect()
         self.rect.x = x
         self.rect.y = y
 
     def mouse_over(self, mouse):
         return False
+
+
+class Inridient_photo(OnlyImage):
+    def mouse_over(self, mouse):
+        if self.rect.collidepoint(mouse):
+            return True
 
 
 class bar(pg.sprite.Sprite):
@@ -30,9 +37,9 @@ class bar(pg.sprite.Sprite):
         if self.rect.collidepoint(mouse):
             return True
 
-    def update_mouse(self, mouse, ots):
+    def update_mouse(self, mouse, my_mouse):
         mouse_x, mouse_y = mouse
-        self.rect.y = mouse_y - ots
+        self.rect.y = mouse_y - my_mouse[1]
         if self.rect.y < 222:
             self.rect.y = 222
         if self.rect.y > 582 - 60:
@@ -47,7 +54,6 @@ if __name__ == "__main__":
     clock = pg.time.Clock()
     running = True
     entities = pg.sprite.Group()
-    entities.add(Ingridient(40, 40))
     entities.add(OnlyImage(840, 200, "rightobject.png"))
     Bar = bar(988, 222)
     entities.add(Bar)
@@ -57,21 +63,26 @@ if __name__ == "__main__":
     entities.add(temp)
     clicked = None
     ingr = []
-    INGR = [("flower1.png", 9), ("flower1.png", 10), ("flower1.png", 9), ("flower1.png", 10)]
+    INGR = {"letUS.png": 9, "flower1.png": 10}
     temp_x = 4
     temp_y = 4
+    font = pg.font.Font(None, 14)
     for elem in INGR:
-        print(1)
-        temp = OnlyImage(840 + temp_x, 222 + temp_y, elem[0])
-        ingr.append(temp)
+        temp = Inridient_photo(840 + temp_x, 222 + temp_y, elem)
         entities.add(temp)
+        text = font.render(str(INGR[elem]), True, "black")
+        text_x = 875 + temp_x
+        text_y = 222 + temp_y - (Bar.rect.y - 222)
+        ingr.append(temp)
         if temp_x == 100:
             temp_x = 0
             temp_y += 48
         else:
             temp_x += 48
+        screen.blit(text, (text_x, text_y))
     entities.draw(screen)
     pg.display.flip()
+    my_mouse = [0, 0]
     while running:
         for event in pg.event.get():
             if event.type == pg.QUIT:
@@ -79,26 +90,52 @@ if __name__ == "__main__":
             if event.type == pg.MOUSEBUTTONDOWN:
                 for elem in entities:
                     if elem.mouse_over(event.pos):
-                        clicked = elem
-                        mouse_y = event.pos[1] - elem.rect.y
+                        if elem == Bar:
+                            clicked = elem
+                            my_mouse[1] = event.pos[1] - elem.rect.y
+                            my_mouse[0] = event.pos[0] - elem.rect.x
+                        elif elem in ingr:
+                            temp = Ingridient(elem.rect.y, elem.rect.x, elem.name)
+                            entities.add(temp)
+                            clicked = temp
+                            my_mouse[1] = event.pos[1] - elem.rect.y
+                            my_mouse[0] = event.pos[0] - elem.rect.x
+                            INGR[elem.name] -= 1
+                            if INGR[elem.name] == 0:
+                                INGR.pop(elem.name)
+                                elem.kill()
+                                print(INGR)
+                                ind = ingr.index(elem)
+                                ingr.pop(ind)
+                        else:
+                            clicked = elem
+                            my_mouse[1] = event.pos[1] - elem.rect.y
+                            my_mouse[0] = event.pos[0] - elem.rect.x
             if event.type == pg.MOUSEBUTTONUP:
                 clicked = None
         screen.fill("black")
         entities.update(platforms)
         if clicked != None:
             mouse_pos = pg.mouse.get_pos()
-            clicked.update_mouse(mouse_pos, mouse_y)
+            clicked.update_mouse(mouse_pos, my_mouse)
         temp_x = 4
         temp_y = 4
+        entities.draw(screen)
+        print(ingr)
         for elem in ingr:
-            elem.rect.y = 222 - (Bar.rect.y - 222) + temp_y
             elem.rect.x = 840 + temp_x
+            elem.rect.y = 222 - (Bar.rect.y - 222) + temp_y
+            text = font.render(str(INGR[elem.name]), True, "black")
+            text_x = 875 + temp_x
+            text_y = 222 + temp_y - (Bar.rect.y - 222)
             if temp_x == 100:
-                temp_x = 0
+                temp_x = 4
                 temp_y += 48
             else:
                 temp_x += 48
-        entities.draw(screen)
+            screen.blit(text, (text_x, text_y))
+        print(ingr)
+        # сюда надо переставить перерисовку изображения после того как я сделаю изображения прозрачными или до этого цикла поставить прорисовку кликнутого изображения
         pg.display.flip()
         clock.tick(fps)
     pg.quit()
