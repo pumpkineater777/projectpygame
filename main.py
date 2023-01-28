@@ -121,7 +121,6 @@ if __name__ == "__main__":
         temp_x = 4
         temp_y = 4
         entities.draw(screen)
-        print(ingr)
         for elem in ingr:
             elem.rect.x = 840 + temp_x
             elem.rect.y = 222 - (Bar.rect.y - 222) + temp_y
@@ -134,7 +133,6 @@ if __name__ == "__main__":
             else:
                 temp_x += 48
             screen.blit(text, (text_x, text_y))
-        print(ingr)
         # сюда надо переставить перерисовку изображения после того как я сделаю изображения прозрачными или до этого цикла поставить прорисовку кликнутого изображения
         pg.display.flip()
         clock.tick(fps)
