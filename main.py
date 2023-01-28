@@ -6,6 +6,36 @@ from porion import Potion
 
 fps = 30
 
+left_win = 100
+top_win = 100
+win_width = 500
+win_height = 500
+
+
+class Camera(object):
+    def __init__(self, camera_func, width, height):
+        self.camera_func = camera_func
+        self.state = pg.Rect(0, 0, width, height)
+
+    def apply(self, target):
+        return target.rect.move(self.state.topleft)
+
+    def update(self, target):
+        self.state = self.camera_func(self.state, target.rect)
+
+
+def camera_configure(camera, target_rect):
+    l, t, _, _ = target_rect
+    _, _, w, h = camera
+    l, t = -l + win_width / 2, -t + win_height / 2
+
+    l = min(left_win, l)  # Не движемся дальше левой границы
+    l = max(-(camera.width - win_width - left_win), l)  # Не движемся дальше правой границы
+    t = max(-(camera.height - win_height - top_win), t)  # Не движемся дальше нижней границы
+    t = min(top_win, t)  # Не движемся дальше верхней границы
+
+    return pg.Rect(l, t, w, h)
+
 
 class OnlyImage(pg.sprite.Sprite):
     def __init__(self, x, y, name):
@@ -53,6 +83,16 @@ class bar(pg.sprite.Sprite):
             self.rect.y = 582 - 60
 
 
+class Boarder(pg.sprite.Sprite):
+    def __init__(self, x, y, width, height):
+        super().__init__()
+        self.image = pg.Surface((width, height))
+        self.image.fill("grey")
+        self.rect = self.image.get_rect()
+        self.rect.x = x
+        self.rect.y = y
+
+
 if __name__ == "__main__":
     pg.init()
     size = width, height = 1000, 700
@@ -60,9 +100,15 @@ if __name__ == "__main__":
     pg.display.set_caption("Narkotiki")
     clock = pg.time.Clock()
     running = True
+    addiction = pg.sprite.Group()
+    board = pg.sprite.Group()
     entities = pg.sprite.Group()
     map = Map(0, 0, "potioncraftmap.jpg")
-    entities.add(map)
+    addiction.add(map)
+    board.add(Boarder(0, 0, width, top_win))
+    board.add(Boarder(0, left_win, left_win, height - left_win))
+    board.add(Boarder(left_win + win_width, top_win, width - (left_win + win_width), height - top_win))
+    board.add(Boarder(left_win, top_win + win_height, width - left_win, height - (top_win + win_height)))
     entities.add(OnlyImage(840, 200, "rightobject.png"))
     Bar = bar(988, 222)
     entities.add(Bar)
@@ -70,6 +116,9 @@ if __name__ == "__main__":
     temp = Object(0, 600)
     platforms.append(temp)
     entities.add(temp)
+    total_width = 2580
+    total_height = 2597
+    camera = Camera(camera_configure, total_width, total_height)
     clicked = None
     ingr = []
     INGR = {"letUS.png": 9, "flower1.png": 10}
@@ -77,7 +126,7 @@ if __name__ == "__main__":
     temp_x = 4
     temp_y = 4
     hero = Potion(400, 400)
-    entities.add(hero)
+    addiction.add(hero)
     font = pg.font.Font(None, 14)
     direc = [False, False, False, False]
     for elem in INGR:
@@ -93,7 +142,8 @@ if __name__ == "__main__":
         else:
             temp_x += 48
         screen.blit(text, (text_x, text_y))
-    entities.draw(screen)
+    for e in entities:
+        screen.blit(e.image, camera.apply(e))
     pg.display.flip()
     my_mouse = [0, 0]
     while running:
@@ -150,15 +200,19 @@ if __name__ == "__main__":
         if clicked != None:
             mouse_pos = pg.mouse.get_pos()
             clicked.update_mouse(mouse_pos, my_mouse)
+        camera.update(hero)
         temp_x = 4
         temp_y = 4
+        for e in addiction:
+            screen.blit(e.image, camera.apply(e))
+        board.draw(screen)
         entities.draw(screen)
         for elem in ingr:
             elem.rect.x = 840 + temp_x
-            elem.rect.y = 222 - (Bar.rect.y - 222) + temp_y
+            elem.rect.y = 222 - round(Bar.rect.y - 222) + temp_y
             text = font.render(str(INGR[elem.name]), True, "black")
             text_x = 875 + temp_x
-            text_y = 222 + temp_y - (Bar.rect.y - 222)
+            text_y = 222 + temp_y - round(Bar.rect.y - 222)
             if temp_x == 100:
                 temp_x = 4
                 temp_y += 48
