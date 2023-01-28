@@ -2,6 +2,7 @@ import pygame as pg
 from ingridient import Ingridient
 from load_image import load_image
 from object import Object
+from porion import Potion
 
 fps = 30
 
@@ -17,6 +18,12 @@ class OnlyImage(pg.sprite.Sprite):
 
     def mouse_over(self, mouse):
         return False
+
+
+class Map(OnlyImage):
+    def recoord(self, x, y):
+        self.rect.x = x
+        self.rect.y = y
 
 
 class Inridient_photo(OnlyImage):
@@ -54,6 +61,8 @@ if __name__ == "__main__":
     clock = pg.time.Clock()
     running = True
     entities = pg.sprite.Group()
+    map = Map(0, 0, "potioncraftmap.jpg")
+    entities.add(map)
     entities.add(OnlyImage(840, 200, "rightobject.png"))
     Bar = bar(988, 222)
     entities.add(Bar)
@@ -64,9 +73,13 @@ if __name__ == "__main__":
     clicked = None
     ingr = []
     INGR = {"letUS.png": 9, "flower1.png": 10}
+    inrgidientGroup = pg.sprite.Group()
     temp_x = 4
     temp_y = 4
+    hero = Potion(400, 400)
+    entities.add(hero)
     font = pg.font.Font(None, 14)
+    direc = [False, False, False, False]
     for elem in INGR:
         temp = Inridient_photo(840 + temp_x, 222 + temp_y, elem)
         entities.add(temp)
@@ -96,6 +109,7 @@ if __name__ == "__main__":
                             my_mouse[0] = event.pos[0] - elem.rect.x
                         elif elem in ingr:
                             temp = Ingridient(elem.rect.y, elem.rect.x, elem.name)
+                            inrgidientGroup.add(temp)
                             entities.add(temp)
                             clicked = temp
                             my_mouse[1] = event.pos[1] - elem.rect.y
@@ -104,17 +118,35 @@ if __name__ == "__main__":
                             if INGR[elem.name] == 0:
                                 INGR.pop(elem.name)
                                 elem.kill()
-                                print(INGR)
                                 ind = ingr.index(elem)
                                 ingr.pop(ind)
                         else:
                             clicked = elem
                             my_mouse[1] = event.pos[1] - elem.rect.y
                             my_mouse[0] = event.pos[0] - elem.rect.x
+            if event.type == pg.KEYDOWN:
+                if event.key == pg.K_w:
+                    direc[0] = True
+                if event.key == pg.K_d:
+                    direc[1] = True
+                if event.key == pg.K_s:
+                    direc[2] = True
+                if event.key == pg.K_a:
+                    direc[3] = True
+            if event.type == pg.KEYUP:
+                if event.key == pg.K_w:
+                    direc[0] = False
+                if event.key == pg.K_d:
+                    direc[1] = False
+                if event.key == pg.K_s:
+                    direc[2] = False
+                if event.key == pg.K_a:
+                    direc[3] = False
             if event.type == pg.MOUSEBUTTONUP:
                 clicked = None
         screen.fill("black")
-        entities.update(platforms)
+        hero.update(direc)
+        inrgidientGroup.update(platforms)
         if clicked != None:
             mouse_pos = pg.mouse.get_pos()
             clicked.update_mouse(mouse_pos, my_mouse)
