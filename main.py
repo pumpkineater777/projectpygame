@@ -125,7 +125,7 @@ if __name__ == "__main__":
     inrgidientGroup = pg.sprite.Group()
     temp_x = 4
     temp_y = 4
-    hero = Potion(400, 400)
+    hero = Potion(1284, 1284)
     addiction.add(hero)
     font = pg.font.Font(None, 14)
     direc = [False, False, False, False]

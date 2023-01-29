@@ -50,3 +50,5 @@ class Potion(pg.sprite.Sprite):
     def mouse_over(self, mouse):
         return False
 
+    #def set_coords(self, x, y):
+
