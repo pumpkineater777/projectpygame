@@ -4,6 +4,7 @@ from load_image import load_image
 from object import Object
 from porion import Potion
 from bpwl import Bowl
+from ruchka import Ruchka
 
 fps = 30
 
@@ -112,10 +113,11 @@ if __name__ == "__main__":
     board.add(Boarder(left_win, top_win + win_height, width - left_win, height - (top_win + win_height)))
     entities.add(OnlyImage(400, 417, "chunk.png"))
     entities.add(OnlyImage(840, 200, "rightobject.png"))
+    ruchka = Ruchka(430, 355)
+    entities.add(ruchka)
     temp = Bowl(430, 420)
     entities.add(temp)
     kills = [temp]
-    entities.add()
     Bar = bar(988, 222)
     entities.add(Bar)
     platforms = []
@@ -169,11 +171,7 @@ if __name__ == "__main__":
             if event.type == pg.MOUSEBUTTONDOWN:
                 for elem in entities:
                     if elem.mouse_over(event.pos):
-                        if elem == Bar:
-                            clicked = elem
-                            my_mouse[1] = event.pos[1] - elem.rect.y
-                            my_mouse[0] = event.pos[0] - elem.rect.x
-                        elif elem in ingr:
+                        if elem in ingr:
                             temp = Ingridient(elem.rect.y, elem.rect.x, elem.name)
                             inrgidientGroup.add(temp)
                             entities.add(temp)
