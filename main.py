@@ -110,7 +110,7 @@ if __name__ == "__main__":
     board.add(Boarder(0, left_win, left_win, height - left_win))
     board.add(Boarder(left_win + win_width, top_win, width - (left_win + win_width), height - top_win))
     board.add(Boarder(left_win, top_win + win_height, width - left_win, height - (top_win + win_height)))
-    entities.add(OnlyImage(400, 350, "Котёл.png"))
+    entities.add(OnlyImage(400, 417, "chunk.png"))
     entities.add(OnlyImage(840, 200, "rightobject.png"))
     temp = Bowl(430, 420)
     entities.add(temp)
