@@ -1,6 +1,7 @@
 import pygame as pg
 from load_image import load_image
 
+
 width = 40
 height = 40
 GRAVITY = 0.35
@@ -30,15 +31,19 @@ class Ingridient(pg.sprite.Sprite):
         self.vx = 0
         self.on = False
 
-    def update(self, platforms):
+    def update(self, platforms, kills, clicked):
         if not self.on:
             self.vy += 0.35
         self.rect = self.rect.move(self.vx, self.vy)
-        self.collide(platforms)
+        self.collide(platforms, kills, clicked)
 
-    def collide(self, platforms):
+    def collide(self, platforms, kills, clicked):
         for p in platforms:
             if pg.sprite.collide_rect(self, p):
                 self.on = True
                 self.rect.bottom = p.rect.top
                 self.vy = 0
+        for k in kills:
+            if pg.sprite.collide_rect(self, k):
+                if self != clicked:
+                    self.kill()

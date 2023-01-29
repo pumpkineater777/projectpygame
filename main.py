@@ -3,13 +3,14 @@ from ingridient import Ingridient
 from load_image import load_image
 from object import Object
 from porion import Potion
+from bpwl import Bowl
 
 fps = 30
 
-left_win = 100
-top_win = 100
-win_width = 500
-win_height = 500
+left_win = 50
+top_win = 50
+win_width = 600
+win_height = 400
 
 
 class Camera(object):
@@ -109,11 +110,16 @@ if __name__ == "__main__":
     board.add(Boarder(0, left_win, left_win, height - left_win))
     board.add(Boarder(left_win + win_width, top_win, width - (left_win + win_width), height - top_win))
     board.add(Boarder(left_win, top_win + win_height, width - left_win, height - (top_win + win_height)))
+    entities.add(OnlyImage(400, 350, "Котёл.png"))
     entities.add(OnlyImage(840, 200, "rightobject.png"))
+    temp = Bowl(430, 420)
+    entities.add(temp)
+    kills = [temp]
+    entities.add()
     Bar = bar(988, 222)
     entities.add(Bar)
     platforms = []
-    temp = Object(0, 600)
+    temp = Object(0, 650)
     platforms.append(temp)
     entities.add(temp)
     total_width = 2580
@@ -129,6 +135,7 @@ if __name__ == "__main__":
     addiction.add(hero)
     font = pg.font.Font(None, 14)
     direc = [False, False, False, False]
+    pointed = [None, None]
     for elem in INGR:
         temp = Inridient_photo(840 + temp_x, 222 + temp_y, elem)
         entities.add(temp)
@@ -146,10 +153,19 @@ if __name__ == "__main__":
         screen.blit(e.image, camera.apply(e))
     pg.display.flip()
     my_mouse = [0, 0]
+    timer = 0
+    tempopary = pg.sprite.Group()
     while running:
         for event in pg.event.get():
             if event.type == pg.QUIT:
                 running = False
+            if event.type == pg.MOUSEMOTION:
+                for elem in entities:
+                    if elem.mouse_over(event.pos):
+                        pointed = pointed[1], elem
+                        break
+                else:
+                    pointed = pointed[1], None
             if event.type == pg.MOUSEBUTTONDOWN:
                 for elem in entities:
                     if elem.mouse_over(event.pos):
@@ -194,13 +210,24 @@ if __name__ == "__main__":
                     direc[3] = False
             if event.type == pg.MOUSEBUTTONUP:
                 clicked = None
+        if pointed[0] == pointed[1] != None:
+            timer += 1
+        else:
+            timer = 0
+            for elem in tempopary:
+                elem.kill()
+        if timer >= 50:
+            if pointed[0] in ingr:
+                temp = OnlyImage(pointed[0].rect.x - 75, pointed[0].rect.y + 50, "amistupid.jpg")
+                tempopary.add(temp)
+                entities.add(temp)
         screen.fill("black")
         hero.update(direc)
-        inrgidientGroup.update(platforms)
+        inrgidientGroup.update(platforms, kills, clicked)
+        camera.update(hero)
         if clicked != None:
             mouse_pos = pg.mouse.get_pos()
             clicked.update_mouse(mouse_pos, my_mouse)
-        camera.update(hero)
         temp_x = 4
         temp_y = 4
         for e in addiction:
