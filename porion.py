@@ -3,6 +3,7 @@ from load_image import load_image
 
 move_speed = 7
 
+
 class Potion(pg.sprite.Sprite):
     def __init__(self, x, y):
         super().__init__()
@@ -50,5 +51,6 @@ class Potion(pg.sprite.Sprite):
     def mouse_over(self, mouse):
         return False
 
-    #def set_coords(self, x, y):
-
+    def set_coords(self, x, y):
+        self.rect.x += x
+        self.rect.y += y

@@ -31,19 +31,16 @@ class Ingridient(pg.sprite.Sprite):
         self.vx = 0
         self.on = False
 
-    def update(self, platforms, kills, clicked):
+    def update(self, platforms):
         if not self.on:
             self.vy += 0.35
         self.rect = self.rect.move(self.vx, self.vy)
-        self.collide(platforms, kills, clicked)
+        self.collide(platforms)
 
-    def collide(self, platforms, kills, clicked):
+    def collide(self, platforms):
         for p in platforms:
             if pg.sprite.collide_rect(self, p):
                 self.on = True
                 self.rect.bottom = p.rect.top
                 self.vy = 0
-        for k in kills:
-            if pg.sprite.collide_rect(self, k):
-                if self != clicked:
-                    self.kill()
+
