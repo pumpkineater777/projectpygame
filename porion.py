@@ -8,6 +8,7 @@ class Potion(pg.sprite.Sprite):
     def __init__(self, x, y):
         super().__init__()
         self.image = load_image("potionlazy.png")
+        self.mask =  pg.mask.from_surface(self.image)
         self.rect = self.image.get_rect()
         self.rect.x = x
         self.rect.y = y
@@ -52,5 +53,11 @@ class Potion(pg.sprite.Sprite):
         return False
 
     def set_coords(self, x, y):
+        self.rect.x = x
+        self.rect.y = y
+
+    def move_coords(self, x, y):
         self.rect.x += x
         self.rect.y += y
+
+
