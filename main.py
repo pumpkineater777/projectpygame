@@ -91,7 +91,9 @@ class Only_rect(pg.sprite.Sprite):
         self.image.fill(color)
 
     def mouse_over(self, mouse):
-        return False
+        if self.rect.collidepoint(mouse):
+            return True
+
 
 
 class Camera(object):
@@ -178,6 +180,12 @@ class Boarder(pg.sprite.Sprite):
         self.rect.x = x
         self.rect.y = y
 
+class EndPoint(OnlyImage):
+    def __init__(self, x, y, name, potion):
+        super().__init__(x, y, name)
+        self.mask = pg.mask.from_surface(self.image)
+        self.potion = potion
+
 
 if __name__ == "__main__":
     pg.init()
@@ -230,7 +238,7 @@ if __name__ == "__main__":
     pointed = [None, None]
     big_path = []
     end_point = []
-    temp = OnlyImage(1200, 1200, "potionlazy.png")
+    temp = EndPoint(1200, 1200, "potionlazy.png", "potion_photo.png")
     end_point.append(temp)
     addiction.add(temp)
     font_end = pg.font.Font(None, 40)
@@ -338,6 +346,14 @@ if __name__ == "__main__":
                                     elem.kill()
                                     ind = poti.index(elem)
                                     poti.pop(ind)
+                        elif elem == rectangle:
+                            if could_potion_and:
+                                hero.set_coords(1284, 1284)
+                                if could_potion_and.potion in POTIONS:
+                                    POTIONS[could_potion_and.potion] += 1
+                                else:
+                                    POTIONS[could_potion_and.potion] = 1
+                                could_potion_and = False
                         else:
                             clicked = elem
                             my_mouse[1] = event.pos[1] - elem.rect.y
@@ -419,8 +435,8 @@ if __name__ == "__main__":
         else:
             poti_photo.draw(screen)
         for elem in end_point:
-            if pg.sprite.collide_rect(hero, elem):
-                could_potion_and = True
+            if pg.sprite.collide_mask(hero, elem):
+                could_potion_and = elem
                 break
         else:
             could_potion_and = False

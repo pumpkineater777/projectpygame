@@ -7,7 +7,6 @@ move_speed = 10
 
 class Base_shape(pg.sprite.Sprite):
     def __init__(self, x, y, width, height, color):
-        print("color")
         super().__init__()
         self.image = pg.Surface((width, height))
         self.image.fill(color)
@@ -64,7 +63,6 @@ if __name__ == "__main__":
         if temp == cust.rect.x and direc[0] != -1:
             direc[0] = -1
             if temp == 700:
-                print(1)
                 entities.add(Base_shape(200, 600, 600, 50, "red"))
         entities.draw(screen)
         clock.tick(fps)
