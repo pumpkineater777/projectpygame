@@ -1,6 +1,10 @@
 from load_image import load_image
+from main import OnlyImage, Only_rect
 import pygame as pg
 fps = 60
+text = [["Продолжить", 200, 200], ["Новая игра", 200, 300], ["Об игре", 200, 400]]
+
+#class my_image
 
 if __name__ == "__main__":
     pg.init()

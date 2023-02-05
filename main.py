@@ -241,6 +241,8 @@ if __name__ == "__main__":
     temp = EndPoint(1200, 1200, "potionlazy.png", "potion_photo.png")
     end_point.append(temp)
     addiction.add(temp)
+    discard_button = Inridient_photo(75, 465, "discard.png")
+    entities.add(discard_button)
     font_end = pg.font.Font(None, 40)
     text_end = font_end.render("Завершить зелье", True, "black")
     screen.blit(text_end, (100, 600))
@@ -300,10 +302,11 @@ if __name__ == "__main__":
             if event.type == pg.QUIT:
                 running = False
             if event.type == pg.MOUSEMOTION:
-                for elem in entities:
+                for elem in *entities, *ingr_photo, *poti_photo:
                     if elem.mouse_over(event.pos) and event.pos[1] >= 200:
-                        pointed = pointed[1], elem
-                        break
+                        if (elem in ingr and active_button == 0) or (elem in poti and active_button == 1):
+                            pointed = pointed[1], elem
+                            break
                 else:
                     pointed = pointed[1], None
             if event.type == pg.MOUSEBUTTONDOWN:
@@ -353,7 +356,17 @@ if __name__ == "__main__":
                                     POTIONS[could_potion_and.potion] += 1
                                 else:
                                     POTIONS[could_potion_and.potion] = 1
+                                for elem in big_path:
+                                    elem.kill()
+                                big_path = []
+                                path = []
                                 could_potion_and = False
+                        elif elem == discard_button:
+                            hero.set_coords(1284, 1284)
+                            for elem in big_path:
+                                elem.kill()
+                            big_path = []
+                            path = []
                         else:
                             clicked = elem
                             my_mouse[1] = event.pos[1] - elem.rect.y
@@ -385,7 +398,7 @@ if __name__ == "__main__":
             for elem in tempopary:
                 elem.kill()
         if timer >= 50:
-            if pointed[0] in ingr:
+            if pointed[0] in ingr or pointed[0] in poti:
                 temp = OnlyImage(pointed[0].rect.x - 75, pointed[0].rect.y + 50, "amistupid.jpg")
                 tempopary.add(temp)
                 entities.add(temp)
