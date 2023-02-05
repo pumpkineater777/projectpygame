@@ -12,4 +12,3 @@ class Object(pg.sprite.Sprite):
 
     def mouse_over(self, mouse):
         return False
-

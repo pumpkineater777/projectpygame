@@ -74,6 +74,7 @@ Path = [
     (2.415302671749206, 1.7794136685552076), (2.415302671749206, 1.7794136685552076),
     (2.4153026717492025, 1.7794136685552076), ]
 poor_dict = {0: ("ingidient_", 840), 1: ("potion_", 927)}
+poor_mass_dict = {0: ("taverna_", 0), 1: ("laborat_", 50)}
 INGR = {"letUS.png": 9, "flower1.png": 10}
 POTIONS = {"potion_photo.png": 2}
 
@@ -246,6 +247,15 @@ if __name__ == "__main__":
     font_end = pg.font.Font(None, 40)
     text_end = font_end.render("Завершить зелье", True, "black")
     screen.blit(text_end, (100, 600))
+    mass_butt = []
+    act_mass_butt = 1
+    mass_butt_group = pg.sprite.Group()
+    temp = Inridient_photo(poor_mass_dict[0][1], 0, "taverna_passive.png")
+    mass_butt.append(temp)
+    mass_butt_group.add(temp)
+    temp = Inridient_photo(poor_mass_dict[1][1], 0, "laborat_active.png")
+    mass_butt.append(temp)
+    mass_butt_group.add(temp)
     buttons = []
     active_button = 0
     buttons_group = pg.sprite.Group()
@@ -310,9 +320,20 @@ if __name__ == "__main__":
                 else:
                     pointed = pointed[1], None
             if event.type == pg.MOUSEBUTTONDOWN:
-                for elem in *entities, *moveGroup, *buttons_group, *ingr_photo, *poti_photo:
+                for elem in *entities, *moveGroup, *buttons_group, *ingr_photo, *poti_photo, *mass_butt_group:
                     if elem.mouse_over(event.pos):
-                        if elem in buttons:
+                        if elem in mass_butt:
+                            if mass_butt.index(elem) != act_mass_butt:
+                                mass_butt[act_mass_butt].kill()
+                                mass_butt[act_mass_butt] = Inridient_photo(poor_mass_dict[act_mass_butt][1], 0,
+                                                                         poor_mass_dict[act_mass_butt][0] + "passive.png")
+                                mass_butt_group.add(mass_butt[act_mass_butt])
+                                act_mass_butt = mass_butt.index(elem)
+                                mass_butt[act_mass_butt].kill()
+                                mass_butt[act_mass_butt] = Inridient_photo(poor_mass_dict[act_mass_butt][1], 0,
+                                                                         poor_mass_dict[act_mass_butt][0] + "active.png")
+                                mass_butt_group.add(mass_butt[act_mass_butt])
+                        elif elem in buttons:
                             if buttons.index(elem) != active_button:
                                 buttons[active_button].kill()
                                 buttons[active_button] = Inridient_photo(poor_dict[active_button][1], 100,
@@ -487,6 +508,7 @@ if __name__ == "__main__":
         screen.blit(text_end, (75, 550))
         individ_board.draw(screen)
         buttons_group.draw(screen)
+        mass_butt_group.draw(screen)
         moveGroup.draw(screen)
         # сюда надо переставить перерисовку изображения после того как я сделаю изображения прозрачными или до этого цикла поставить прорисовку кликнутого изображения
         pg.display.flip()
