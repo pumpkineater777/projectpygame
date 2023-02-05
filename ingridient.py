@@ -8,7 +8,7 @@ GRAVITY = 0.35
 
 
 class Ingridient(pg.sprite.Sprite):
-    def __init__(self, x, y, name):
+    def __init__(self, x, y, name, group):
         super().__init__()
         self.image = load_image(name)
         self.name = name
@@ -18,6 +18,7 @@ class Ingridient(pg.sprite.Sprite):
         self.vx = 0
         self.vy = 0
         self.on = False
+        self.group = group
 
     def mouse_over(self, mouse):
         if self.rect.collidepoint(mouse):

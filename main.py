@@ -75,6 +75,7 @@ Path = [
     (2.4153026717492025, 1.7794136685552076), ]
 poor_dict = {0: ("ingidient_", 840), 1: ("potion_", 927)}
 INGR = {"letUS.png": 9, "flower1.png": 10}
+POTIONS = {"potion_photo.png": 2}
 
 
 class Only_rect(pg.sprite.Sprite):
@@ -216,7 +217,7 @@ if __name__ == "__main__":
     camera = Camera(camera_configure, total_width, total_height)
     clicked = None
     ingr = []
-    inrgidientGroup = pg.sprite.Group()
+    moveGroup = pg.sprite.Group()
     temp_x = 4
     temp_y = 4
     hero = Potion(1284, 1284)
@@ -259,6 +260,23 @@ if __name__ == "__main__":
         else:
             temp_x += 48
         screen.blit(text, (text_x, text_y))
+    poti = []
+    poti_photo = pg.sprite.Group()
+    temp_x = 4
+    temp_y = 4
+    for elem in POTIONS:
+        temp = Inridient_photo(840 + temp_x, 222 + temp_y, elem)
+        poti_photo.add(temp)
+        text = font.render(str(POTIONS[elem]), True, "black")
+        text_x = 875 + temp_x
+        text_y = 222 + temp_y - (Bar.rect.y - 222)
+        poti.append(temp)
+        if temp_x == 100:
+            temp_x = 0
+            temp_y += 48
+        else:
+            temp_x += 48
+        screen.blit(text, (text_x, text_y))
     for e in addiction:
         screen.blit(e.image, camera.apply(e))
     entities.draw(screen)
@@ -281,7 +299,7 @@ if __name__ == "__main__":
                 else:
                     pointed = pointed[1], None
             if event.type == pg.MOUSEBUTTONDOWN:
-                for elem in *entities, *inrgidientGroup, *buttons_group, *ingr_photo:
+                for elem in *entities, *moveGroup, *buttons_group, *ingr_photo, *poti_photo:
                     if elem.mouse_over(event.pos):
                         if elem in buttons:
                             if buttons.index(elem) != active_button:
@@ -295,9 +313,9 @@ if __name__ == "__main__":
                                                                          poor_dict[active_button][0] + "active.png")
                                 buttons_group.add(buttons[active_button])
                         elif elem in ingr:
-                            if event.pos[1] >= 200:
-                                temp = Ingridient(elem.rect.y, elem.rect.x, elem.name)
-                                inrgidientGroup.add(temp)
+                            if event.pos[1] >= 200 and active_button == 0:
+                                temp = Ingridient(elem.rect.y, elem.rect.x, elem.name, "ingr")
+                                moveGroup.add(temp)
                                 clicked = temp
                                 my_mouse[1] = event.pos[1] - elem.rect.y
                                 my_mouse[0] = event.pos[0] - elem.rect.x
@@ -307,6 +325,19 @@ if __name__ == "__main__":
                                     elem.kill()
                                     ind = ingr.index(elem)
                                     ingr.pop(ind)
+                        elif elem in poti:
+                            if event.pos[1] >= 200 and active_button == 1:
+                                temp = Ingridient(elem.rect.y, elem.rect.x, elem.name, "poti")
+                                moveGroup.add(temp)
+                                clicked = temp
+                                my_mouse[1] = event.pos[1] - elem.rect.y
+                                my_mouse[0] = event.pos[0] - elem.rect.x
+                                POTIONS[elem.name] -= 1
+                                if POTIONS[elem.name] == 0:
+                                    POTIONS.pop(elem.name)
+                                    elem.kill()
+                                    ind = poti.index(elem)
+                                    poti.pop(ind)
                         else:
                             clicked = elem
                             my_mouse[1] = event.pos[1] - elem.rect.y
@@ -350,11 +381,11 @@ if __name__ == "__main__":
             for elem in big_path:
                 elem.kill()
             big_path = []
-        inrgidientGroup.update(platforms)
-        for self in inrgidientGroup:
+        moveGroup.update(platforms)
+        for self in moveGroup:
             for k in kills:
                 if pg.sprite.collide_rect(self, k):
-                    if self != clicked:
+                    if self != clicked and self.group == "ingr":
                         self.kill()
                         temp = OnlyImage(hero.rect.x - 30, hero.rect.y + 10, "path.png")
                         addiction.add(temp)
@@ -385,6 +416,8 @@ if __name__ == "__main__":
         entities.draw(screen)
         if active_button == 0:
             ingr_photo.draw(screen)
+        else:
+            poti_photo.draw(screen)
         for elem in end_point:
             if pg.sprite.collide_rect(hero, elem):
                 could_potion_and = True
@@ -408,11 +441,24 @@ if __name__ == "__main__":
                 else:
                     temp_x += 48
                 screen.blit(text, (text_x, text_y))
+        else:
+            for elem in poti:
+                elem.rect.x = 840 + temp_x
+                elem.rect.y = 222 - round(Bar.rect.y - 222) + temp_y
+                text = font.render(str(POTIONS[elem.name]), True, "black")
+                text_x = 875 + temp_x
+                text_y = 222 + temp_y - round(Bar.rect.y - 222)
+                if temp_x == 100:
+                    temp_x = 4
+                    temp_y += 48
+                else:
+                    temp_x += 48
+                screen.blit(text, (text_x, text_y))
         screen.blit(hero.image, camera.apply(hero))
         screen.blit(text_end, (75, 550))
         individ_board.draw(screen)
         buttons_group.draw(screen)
-        inrgidientGroup.draw(screen)
+        moveGroup.draw(screen)
         # сюда надо переставить перерисовку изображения после того как я сделаю изображения прозрачными или до этого цикла поставить прорисовку кликнутого изображения
         pg.display.flip()
         clock.tick(fps)
