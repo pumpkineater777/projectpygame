@@ -81,7 +81,7 @@ TEXT = [["Продолжить", 400, 250], ["Новая игра", 400, 350], [
 WAY_TO_HELL = "image/"
 ingridient_spisok = ["letUS.png", "flower1.png"]
 potion_spisok = ["potion_phot.png"]
-customer_speech = "А ну-ка, старина, подкинь-ка мне водочки"
+customer_speech = "А ну-ка, старина, подкинь-ка мне водочки и давай лей не жалея да похлеще и повеселее. Дайвай-ка я тебе песней наведу. Ух ты травушка-муравушка крепишься..."
 customer_want = "letUS.png"
 customer_dont_pick = "Ээ ты меня попутал что ли? Я сказал ВОДКИ"
 customer_picked = "Эх за твое здоровье. Ух, сука крепкая"
@@ -95,13 +95,22 @@ class Only_rect(pg.sprite.Sprite):
         self.rect.x = x
         self.rect.y = y
         self.image.fill(color)
+        self.color = color
 
     def recolor(self, color):
         self.image.fill(color)
+        self.color = color
 
     def mouse_over(self, mouse):
         if self.rect.collidepoint(mouse):
             return True
+
+    def redo(self, x, y, width, height):
+        self.image = pg.Surface((width, height))
+        self.rect = self.image.get_rect()
+        self.rect.x = x
+        self.rect.y = y
+        self.image.fill(self.color)
 
 
 class Camera(object):
@@ -219,6 +228,9 @@ if __name__ == "__main__":
     kill_map = Map(415, 250, "mapkill.png")
     addiction.add(kill_map)
     addiction.add(map)
+    max_row = 410
+    top_left = 400
+    reading_cust_speech = False
     board.add(Boarder(0, 0, width, top_win))
     board.add(Boarder(0, left_win, left_win, height - left_win))
     board.add(Boarder(left_win + win_width, top_win, width - (left_win + win_width), height - top_win))
@@ -287,6 +299,9 @@ if __name__ == "__main__":
     temp = Inridient_photo(poor_dict[1][1], 100, "potion_passive.png")
     buttons.append(temp)
     buttons_group.add(temp)
+    end_dialod_button = Only_rect(100, 100, 280, 70, "red")
+    text_end_dialog = font_end.render("Закончить диалог", True, "black")
+    screen.blit(text_end_dialog, (120, 120))
     ingr_photo = pg.sprite.Group()
     result = cur.execute(f"""SELECT * FROM ingridient_player_data
             WHERE id_player = {id}""").fetchall()
@@ -338,11 +353,13 @@ if __name__ == "__main__":
     entities_start = pg.sprite.Group()
     entities_start.add(OnlyImage(0, 0, "backgroundstart.png"))
     entities_start.draw(screen)
+    entities_taverna.add(end_dialod_button)
     pg.display.flip()
     font_text = pg.font.Font(None, 40)
     buttons_start = pg.sprite.Group()
     move_taverna_group = pg.sprite.Group()
     buttons_start_vector = []
+    font_customer = pg.font.Font(None, 20)
     for elem in TEXT:
         text = font_text.render(elem[0], True, "black")
         screen.blit(text, (elem[1], elem[2]))
@@ -358,6 +375,7 @@ if __name__ == "__main__":
     tempopary = pg.sprite.Group()
     path = []
     index = 0
+    read_rect = None
     while running:
         for event in pg.event.get():
             if event.type == pg.QUIT:
@@ -381,10 +399,15 @@ if __name__ == "__main__":
                         point_group = pg.sprite.Group()
             if event.type == pg.MOUSEBUTTONDOWN:
                 if gaming:
-                    for elem in *entities, *moveGroup, *buttons_group, *ingr_photo, *poti_photo, *mass_butt_group, *move_taverna_group:
+                    for elem in *entities, *moveGroup, *buttons_group, *ingr_photo, *poti_photo, *mass_butt_group, *move_taverna_group, end_dialod_button:
                         if elem.mouse_over(event.pos):
                             mustage = True
-                            if elem in mass_butt:
+                            if elem == end_dialod_button:
+                                if reading_cust_speech == 1:
+                                    reading_cust_speech = 2
+                                    read_rect.redo(top_left, 400 - (len(customer_dont_pick)) / 53 * 20, max_row,
+                                                       (len(customer_dont_pick)) / 53 * 20)
+                            elif elem in mass_butt:
                                 if mass_butt.index(elem) != act_mass_butt:
                                     mass_butt[act_mass_butt].kill()
                                     mass_butt[act_mass_butt] = Inridient_photo(poor_mass_dict[act_mass_butt][1], 0,
@@ -424,13 +447,14 @@ if __name__ == "__main__":
                                     if INGR[elem.name] == 0:
                                         INGR.pop(elem.name)
                                         cur.execute(
-                                            f"""DELETE from ingridient_player_data WHERE title = ?""", (elem.name, ))
+                                            f"""DELETE from ingridient_player_data WHERE title = ?""", (elem.name,))
                                         elem.kill()
                                         ind = ingr.index(elem)
                                         ingr.pop(ind)
                                     else:
                                         cur.execute(
-                                            f"""UPDATE ingridient_player_data SET count = {INGR[elem.name]} WHERE title = ?""", (elem.name, ))
+                                            f"""UPDATE ingridient_player_data SET count = {INGR[elem.name]} WHERE title = ?""",
+                                            (elem.name,))
                                     con.commit()
                             elif elem in poti:
                                 if event.pos[1] >= 200 and active_button == 1:
@@ -452,7 +476,8 @@ if __name__ == "__main__":
                                         poti.pop(ind)
                                     else:
                                         cur.execute(
-                                            f"""UPDATE potion_player_data SET count = {POTIONS[elem.name]} WHERE title = ?""", (elem.name, ))
+                                            f"""UPDATE potion_player_data SET count = {POTIONS[elem.name]} WHERE title = ?""",
+                                            (elem.name,))
                                     con.commit()
                             elif elem == Bar or elem in move_taverna_group:
                                 clicked = elem
@@ -517,9 +542,14 @@ if __name__ == "__main__":
                             direc[3] = True
                     else:
                         if event.key == pg.K_SPACE:
-                            if direc_taverna[0] == -1:
-                                direc_taverna[0] = (direc_taverna[1] + 1) % 2
-                                direc_taverna[1] = direc_taverna[0]
+                            if reading_cust_speech == 2:
+                                read_rect.kill()
+                                read_rect = None
+                            if reading_cust_speech == 0 or reading_cust_speech == 2:
+                                if direc_taverna[0] == -1:
+                                    direc_taverna[0] = (direc_taverna[1] + 1) % 2
+                                    direc_taverna[1] = direc_taverna[0]
+                                reading_cust_speech = 0
                     if event.key == pg.K_ESCAPE:
                         gaming = False
             if event.type == pg.KEYUP:
@@ -648,7 +678,10 @@ if __name__ == "__main__":
                 if temp == cust.rect.x and direc_taverna[0] != -1:
                     direc_taverna[0] = -1
                     if temp == 700:
-                        entities_taverna.add(Only_rect(200, 600, 600, 50, "red"))
+                        read_rect = Only_rect(top_left, 400 - (len(customer_speech)) / 53 * 20, max_row,
+                                                       (len(customer_speech)) / 53 * 20, "black")
+                        entities_taverna.add(read_rect)
+                        reading_cust_speech = 1
                 entities_taverna.draw(screen)
             if act_mass_butt == 0:
                 tuda_ix_group.draw(screen)
@@ -685,6 +718,36 @@ if __name__ == "__main__":
             individ_board.draw(screen)
             mass_butt_group.draw(screen)
             buttons_group.draw(screen)
+            if act_mass_butt == 0:
+                if reading_cust_speech == 1:
+                    temp = customer_speech.split()
+                    text_appender = ""
+                    tyta_y = 400 - (len(customer_speech)) / 53 * 20
+                    for elem in temp:
+                        text_appender += elem + ' '
+                        if len(text_appender) >= 53:
+                            text = font_customer.render(text_appender, True, "orange")
+                            screen.blit(text, (top_left + 5, tyta_y))
+                            tyta_y += 20
+                            text_appender = ""
+                    if text_appender:
+                        text = font_customer.render(text_appender, True, "orange")
+                        screen.blit(text, (top_left + 5, tyta_y))
+                elif reading_cust_speech == 2:
+                    temp = customer_dont_pick.split()
+                    text_appender = ""
+                    tyta_y = 400 - (len(customer_dont_pick)) / 53 * 20
+                    for elem in temp:
+                        text_appender += elem + ' '
+                        if len(text_appender) >= 53:
+                            text = font_customer.render(text_appender, True, "orange")
+                            screen.blit(text, (top_left + 5, tyta_y))
+                            tyta_y += 20
+                            text_appender = ""
+                    if text_appender:
+                        text = font_customer.render(text_appender, True, "orange")
+                        screen.blit(text, (top_left + 5, tyta_y))
+                screen.blit(text_end_dialog, (120, 120))
             if act_mass_butt == 1:
                 moveGroup.draw(screen)
             else:
@@ -703,3 +766,5 @@ if __name__ == "__main__":
         clock.tick(fps)
     pg.quit()
     con.close()
+# будем считать что на строке в 200 пикселей помещаеться максимум 26 букв, чтобы было красиво
+# 1 буква двадцатого фонта размером в 200 / 28.3 пикселя при чем если буква заглавная на нее больше места тратиться чем на маленькую, абсолютно отвратильно просто отвратительно
