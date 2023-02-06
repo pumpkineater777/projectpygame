@@ -81,6 +81,10 @@ TEXT = [["Продолжить", 400, 250], ["Новая игра", 400, 350], [
 WAY_TO_HELL = "image/"
 ingridient_spisok = ["letUS.png", "flower1.png"]
 potion_spisok = ["potion_phot.png"]
+customer_speech = "А ну-ка, старина, подкинь-ка мне водочки"
+customer_want = "letUS.png"
+customer_dont_pick = "Ээ ты меня попутал что ли? Я сказал ВОДКИ"
+customer_picked = "Эх за твое здоровье. Ух, сука крепкая"
 
 
 class Only_rect(pg.sprite.Sprite):
@@ -224,6 +228,8 @@ if __name__ == "__main__":
     entities.add(OnlyImage(400, 417, "chunk.png"))
     tuda_ix = OnlyImage(840, 200, "rightobject.png")
     entities.add(tuda_ix)
+    tuda_ix_group = pg.sprite.Group()
+    tuda_ix_group.add(tuda_ix)
     ruchka = Ruchka(430, 355)
     entities.add(ruchka)
     temp = Bowl(430, 420)
@@ -231,6 +237,7 @@ if __name__ == "__main__":
     kills = [temp]
     Bar = bar(988, 222)
     entities.add(Bar)
+    individ_board.add(Bar)
     platforms = []
     temp = Object(0, 650)
     platforms.append(temp)
@@ -334,6 +341,7 @@ if __name__ == "__main__":
     pg.display.flip()
     font_text = pg.font.Font(None, 40)
     buttons_start = pg.sprite.Group()
+    move_taverna_group = pg.sprite.Group()
     buttons_start_vector = []
     for elem in TEXT:
         text = font_text.render(elem[0], True, "black")
@@ -356,14 +364,13 @@ if __name__ == "__main__":
                 running = False
             if event.type == pg.MOUSEMOTION:
                 if gaming:
-                    if act_mass_butt == 1:
-                        for elem in *entities, *ingr_photo, *poti_photo:
-                            if elem.mouse_over(event.pos) and event.pos[1] >= 200:
-                                if (elem in ingr and active_button == 0) or (elem in poti and active_button == 1):
-                                    pointed = pointed[1], elem
-                                    break
-                        else:
-                            pointed = pointed[1], None
+                    for elem in *ingr_photo, *poti_photo:
+                        if elem.mouse_over(event.pos) and event.pos[1] >= 200:
+                            if (elem in ingr and active_button == 0) or (elem in poti and active_button == 1):
+                                pointed = pointed[1], elem
+                                break
+                    else:
+                        pointed = pointed[1], None
                 else:
                     for elem in buttons_start:
                         if elem.mouse_over(event.pos):
@@ -374,8 +381,9 @@ if __name__ == "__main__":
                         point_group = pg.sprite.Group()
             if event.type == pg.MOUSEBUTTONDOWN:
                 if gaming:
-                    for elem in *entities, *moveGroup, *buttons_group, *ingr_photo, *poti_photo, *mass_butt_group:
+                    for elem in *entities, *moveGroup, *buttons_group, *ingr_photo, *poti_photo, *mass_butt_group, *move_taverna_group:
                         if elem.mouse_over(event.pos):
+                            mustage = True
                             if elem in mass_butt:
                                 if mass_butt.index(elem) != act_mass_butt:
                                     mass_butt[act_mass_butt].kill()
@@ -389,59 +397,71 @@ if __name__ == "__main__":
                                                                                poor_mass_dict[act_mass_butt][
                                                                                    0] + "active.png")
                                     mass_butt_group.add(mass_butt[act_mass_butt])
-                            elif act_mass_butt == 1:
-                                if elem in buttons:
-                                    if buttons.index(elem) != active_button:
-                                        buttons[active_button].kill()
-                                        buttons[active_button] = Inridient_photo(poor_dict[active_button][1], 100,
-                                                                                 poor_dict[active_button][
-                                                                                     0] + "passive.png")
-                                        buttons_group.add(buttons[active_button])
-                                        active_button = buttons.index(elem)
-                                        buttons[active_button].kill()
-                                        buttons[active_button] = Inridient_photo(poor_dict[active_button][1], 100,
-                                                                                 poor_dict[active_button][
-                                                                                     0] + "active.png")
-                                        buttons_group.add(buttons[active_button])
-                                elif elem in ingr:
-                                    if event.pos[1] >= 200 and active_button == 0:
-                                        temp = Ingridient(elem.rect.y, elem.rect.x, elem.name, "ingr")
+                            elif elem in buttons:
+                                if buttons.index(elem) != active_button:
+                                    buttons[active_button].kill()
+                                    buttons[active_button] = Inridient_photo(poor_dict[active_button][1], 100,
+                                                                             poor_dict[active_button][
+                                                                                 0] + "passive.png")
+                                    buttons_group.add(buttons[active_button])
+                                    active_button = buttons.index(elem)
+                                    buttons[active_button].kill()
+                                    buttons[active_button] = Inridient_photo(poor_dict[active_button][1], 100,
+                                                                             poor_dict[active_button][
+                                                                                 0] + "active.png")
+                                    buttons_group.add(buttons[active_button])
+                            elif elem in ingr:
+                                if event.pos[1] >= 200 and active_button == 0:
+                                    temp = Ingridient(elem.rect.y, elem.rect.x, elem.name, "ingr")
+                                    if act_mass_butt == 1:
                                         moveGroup.add(temp)
-                                        clicked = temp
-                                        my_mouse[1] = event.pos[1] - elem.rect.y
-                                        my_mouse[0] = event.pos[0] - elem.rect.x
-                                        INGR[elem.name] -= 1
-                                        if INGR[elem.name] == 0:
-                                            INGR.pop(elem.name)
-                                            cur.execute(
-                                                f"""DELETE from ingridient_player_data WHERE title = ?""", (elem.name, ))
-                                            elem.kill()
-                                            ind = ingr.index(elem)
-                                            ingr.pop(ind)
-                                        else:
-                                            cur.execute(
-                                                f"""UPDATE ingridient_player_data SET count = {INGR[elem.name]} WHERE title = ?""", (elem.name, ))
-                                        con.commit()
-                                elif elem in poti:
-                                    if event.pos[1] >= 200 and active_button == 1:
-                                        temp = Ingridient(elem.rect.y, elem.rect.x, elem.name, "poti")
+                                    else:
+                                        move_taverna_group.add(temp)
+                                    clicked = temp
+                                    my_mouse[1] = event.pos[1] - elem.rect.y
+                                    my_mouse[0] = event.pos[0] - elem.rect.x
+                                    INGR[elem.name] -= 1
+                                    if INGR[elem.name] == 0:
+                                        INGR.pop(elem.name)
+                                        cur.execute(
+                                            f"""DELETE from ingridient_player_data WHERE title = ?""", (elem.name, ))
+                                        elem.kill()
+                                        ind = ingr.index(elem)
+                                        ingr.pop(ind)
+                                    else:
+                                        cur.execute(
+                                            f"""UPDATE ingridient_player_data SET count = {INGR[elem.name]} WHERE title = ?""", (elem.name, ))
+                                    con.commit()
+                            elif elem in poti:
+                                if event.pos[1] >= 200 and active_button == 1:
+                                    temp = Ingridient(elem.rect.y, elem.rect.x, elem.name, "poti")
+                                    if act_mass_butt == 1:
                                         moveGroup.add(temp)
-                                        clicked = temp
-                                        my_mouse[1] = event.pos[1] - elem.rect.y
-                                        my_mouse[0] = event.pos[0] - elem.rect.x
-                                        POTIONS[elem.name] -= 1
-                                        if POTIONS[elem.name] == 0:
-                                            POTIONS.pop(elem.name)
-                                            elem.kill()
-                                            cur.execute(
-                                                f"""DELETE from potion_player_data WHERE title = ?""", (elem.name,))
-                                            ind = poti.index(elem)
-                                            poti.pop(ind)
-                                        else:
-                                            cur.execute(
-                                                f"""UPDATE potion_player_data SET count = {POTIONS[elem.name]} WHERE title = ?""", (elem.name, ))
-                                        con.commit()
-                                elif elem == rectangle:
+                                    else:
+                                        move_taverna_group.add(temp)
+                                    clicked = temp
+                                    my_mouse[1] = event.pos[1] - elem.rect.y
+                                    my_mouse[0] = event.pos[0] - elem.rect.x
+                                    POTIONS[elem.name] -= 1
+                                    if POTIONS[elem.name] == 0:
+                                        POTIONS.pop(elem.name)
+                                        elem.kill()
+                                        cur.execute(
+                                            f"""DELETE from potion_player_data WHERE title = ?""", (elem.name,))
+                                        ind = poti.index(elem)
+                                        poti.pop(ind)
+                                    else:
+                                        cur.execute(
+                                            f"""UPDATE potion_player_data SET count = {POTIONS[elem.name]} WHERE title = ?""", (elem.name, ))
+                                    con.commit()
+                            elif elem == Bar or elem in move_taverna_group:
+                                clicked = elem
+                                my_mouse[1] = event.pos[1] - elem.rect.y
+                                my_mouse[0] = event.pos[0] - elem.rect.x
+                            else:
+                                mustage = False
+                            if act_mass_butt == 1 and not mustage:
+                                if elem == rectangle:
                                     if could_potion_and:
                                         hero.set_coords(1284, 1284)
                                         if could_potion_and.potion in POTIONS:
@@ -476,7 +496,7 @@ if __name__ == "__main__":
                                     big_path = []
                                     path = []
                                     index = 0
-                                else:
+                                elif elem == ruchka or elem in moveGroup:
                                     clicked = elem
                                     my_mouse[1] = event.pos[1] - elem.rect.y
                                     my_mouse[0] = event.pos[0] - elem.rect.x
@@ -515,49 +535,48 @@ if __name__ == "__main__":
                             direc[3] = False
             if event.type == pg.MOUSEBUTTONUP:
                 if gaming:
-                    if act_mass_butt == 1:
-                        if clicked != Bar and clicked:
-                            if pg.sprite.collide_rect(clicked, tuda_ix):
-                                clicked.kill()
-                                print(clicked.name)
-                                if clicked.name in INGR:
-                                    INGR[clicked.name] += 1
-                                    cur.execute(
-                                        f"UPDATE ingridient_player_data SET count = {INGR[clicked.name]} WHERE title = ?",
-                                        (clicked.name,))
-                                elif clicked.name in ingridient_spisok:
-                                    INGR[clicked.name] = 1
-                                    cur.execute(
-                                        f"""INSERT INTO ingridient_player_data VALUES(?, ?, 1)""",
-                                        (id, clicked.name))
-                                    temp = Inridient_photo(840 + ingr_x, 222 + ingr_y, clicked.name)
-                                    ingr_photo.add(temp)
-                                    ingr.append(temp)
-                                    if ingr_x == 100:
-                                        ingr_x = 0
-                                        ingr_y += 48
-                                    else:
-                                        ingr_x += 48
-                                elif clicked.name in POTIONS:
-                                    POTIONS[clicked.name] += 1
-                                    cur.execute(
-                                        f"UPDATE potion_player_data SET count = {POTIONS[clicked.name]} WHERE title = ?",
-                                        (clicked.name,))
-                                elif clicked.name in potion_spisok:
-                                    POTIONS[clicked.name] = 1
-                                    cur.execute(
-                                        f"""INSERT INTO potion_player_data VALUES(?, ?, 1)""",
-                                        (id, clicked.name))
-                                    temp = Inridient_photo(840 + poti_x, 222 + poti_y, clicked.name)
-                                    poti_photo.add(temp)
-                                    poti.append(temp)
-                                    if poti_x == 100:
-                                        poti_x = 0
-                                        poti_y += 48
-                                    else:
-                                        poti_x += 48
-                                con.commit()
-                clicked = None
+                    if clicked != Bar and clicked:
+                        if pg.sprite.collide_rect(clicked, tuda_ix):
+                            clicked.kill()
+                            print(clicked.name)
+                            if clicked.name in INGR:
+                                INGR[clicked.name] += 1
+                                cur.execute(
+                                    f"UPDATE ingridient_player_data SET count = {INGR[clicked.name]} WHERE title = ?",
+                                    (clicked.name,))
+                            elif clicked.name in ingridient_spisok:
+                                INGR[clicked.name] = 1
+                                cur.execute(
+                                    f"""INSERT INTO ingridient_player_data VALUES(?, ?, 1)""",
+                                    (id, clicked.name))
+                                temp = Inridient_photo(840 + ingr_x, 222 + ingr_y, clicked.name)
+                                ingr_photo.add(temp)
+                                ingr.append(temp)
+                                if ingr_x == 100:
+                                    ingr_x = 0
+                                    ingr_y += 48
+                                else:
+                                    ingr_x += 48
+                            elif clicked.name in POTIONS:
+                                POTIONS[clicked.name] += 1
+                                cur.execute(
+                                    f"UPDATE potion_player_data SET count = {POTIONS[clicked.name]} WHERE title = ?",
+                                    (clicked.name,))
+                            elif clicked.name in potion_spisok:
+                                POTIONS[clicked.name] = 1
+                                cur.execute(
+                                    f"""INSERT INTO potion_player_data VALUES(?, ?, 1)""",
+                                    (id, clicked.name))
+                                temp = Inridient_photo(840 + poti_x, 222 + poti_y, clicked.name)
+                                poti_photo.add(temp)
+                                poti.append(temp)
+                                if poti_x == 100:
+                                    poti_x = 0
+                                    poti_y += 48
+                                else:
+                                    poti_x += 48
+                            con.commit()
+                    clicked = None
         screen.fill("black")
         if gaming:
             if act_mass_butt == 1:
@@ -607,16 +626,10 @@ if __name__ == "__main__":
                 elif clicked != None:
                     mouse_pos = pg.mouse.get_pos()
                     clicked.update_mouse(mouse_pos, my_mouse)
-                temp_x = 4
-                temp_y = 4
                 for e in addiction:
                     screen.blit(e.image, camera.apply(e))
                 board.draw(screen)
                 entities.draw(screen)
-                if active_button == 0:
-                    ingr_photo.draw(screen)
-                else:
-                    poti_photo.draw(screen)
                 for elem in end_point:
                     if pg.sprite.collide_mask(hero, elem):
                         could_potion_and = elem
@@ -627,37 +640,8 @@ if __name__ == "__main__":
                     rectangle.recolor("green")
                 else:
                     rectangle.recolor("blue")
-                if active_button == 0:
-                    for elem in ingr:
-                        elem.rect.x = 840 + temp_x
-                        elem.rect.y = 222 - round(Bar.rect.y - 222) + temp_y
-                        text = font.render(str(INGR[elem.name]), True, "black")
-                        text_x = 875 + temp_x
-                        text_y = 222 + temp_y - round(Bar.rect.y - 222)
-                        if temp_x == 100:
-                            temp_x = 4
-                            temp_y += 48
-                        else:
-                            temp_x += 48
-                        screen.blit(text, (text_x, text_y))
-                else:
-                    for elem in poti:
-                        elem.rect.x = 840 + temp_x
-                        elem.rect.y = 222 - round(Bar.rect.y - 222) + temp_y
-                        text = font.render(str(POTIONS[elem.name]), True, "black")
-                        text_x = 875 + temp_x
-                        text_y = 222 + temp_y - round(Bar.rect.y - 222)
-                        if temp_x == 100:
-                            temp_x = 4
-                            temp_y += 48
-                        else:
-                            temp_x += 48
-                        screen.blit(text, (text_x, text_y))
                 screen.blit(hero.image, camera.apply(hero))
                 screen.blit(text_end, (75, 550))
-                individ_board.draw(screen)
-                buttons_group.draw(screen)
-                moveGroup.draw(screen)
             else:
                 temp = cust.rect.x
                 cust.update(direc_taverna[0])
@@ -666,7 +650,48 @@ if __name__ == "__main__":
                     if temp == 700:
                         entities_taverna.add(Only_rect(200, 600, 600, 50, "red"))
                 entities_taverna.draw(screen)
+            if act_mass_butt == 0:
+                tuda_ix_group.draw(screen)
+            temp_x = 4
+            temp_y = 4
+            if active_button == 0:
+                ingr_photo.draw(screen)
+                for elem in ingr:
+                    elem.rect.x = 840 + temp_x
+                    elem.rect.y = 222 - round(Bar.rect.y - 222) + temp_y
+                    text = font.render(str(INGR[elem.name]), True, "black")
+                    text_x = 875 + temp_x
+                    text_y = 222 + temp_y - round(Bar.rect.y - 222)
+                    if temp_x == 100:
+                        temp_x = 4
+                        temp_y += 48
+                    else:
+                        temp_x += 48
+                    screen.blit(text, (text_x, text_y))
+            else:
+                poti_photo.draw(screen)
+                for elem in poti:
+                    elem.rect.x = 840 + temp_x
+                    elem.rect.y = 222 - round(Bar.rect.y - 222) + temp_y
+                    text = font.render(str(POTIONS[elem.name]), True, "black")
+                    text_x = 875 + temp_x
+                    text_y = 222 + temp_y - round(Bar.rect.y - 222)
+                    if temp_x == 100:
+                        temp_x = 4
+                        temp_y += 48
+                    else:
+                        temp_x += 48
+                    screen.blit(text, (text_x, text_y))
+            individ_board.draw(screen)
             mass_butt_group.draw(screen)
+            buttons_group.draw(screen)
+            if act_mass_butt == 1:
+                moveGroup.draw(screen)
+            else:
+                if clicked != None:
+                    mouse_pos = pg.mouse.get_pos()
+                    clicked.update_mouse(mouse_pos, my_mouse)
+                move_taverna_group.draw(screen)
         else:
             entities_start.draw(screen)
             point_group.draw(screen)
