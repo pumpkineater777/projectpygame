@@ -85,6 +85,18 @@ customer_speech = "А ну-ка, старина, подкинь-ка мне во
 customer_want = "letUS.png"
 customer_dont_pick = "Ээ ты меня попутал что ли? Я сказал ВОДКИ"
 customer_picked = "Эх за твое здоровье. Ух, сука крепкая"
+customer_exit = "Пошел-ка я отсюда по-добру, по-здорову"
+
+
+class Actually_only_rect(pg.sprite.Sprite):
+    def __init__(self, x, y, width, height, color):
+        super().__init__()
+        self.image = pg.Surface((width, height))
+        self.rect = self.image.get_rect()
+        self.rect.x = x
+        self.rect.y = y
+        self.image.fill(color)
+        self.color = color
 
 
 class Only_rect(pg.sprite.Sprite):
@@ -348,6 +360,7 @@ if __name__ == "__main__":
         screen.blit(text, (text_x, text_y))
     poti_x = temp_x
     poti_y = temp_y
+    table_or_not = Actually_only_rect(350, 500, 300, 150, "pink")
     for e in addiction:
         screen.blit(e.image, camera.apply(e))
     entities_start = pg.sprite.Group()
@@ -405,8 +418,8 @@ if __name__ == "__main__":
                             if elem == end_dialod_button:
                                 if reading_cust_speech == 1:
                                     reading_cust_speech = 2
-                                    read_rect.redo(top_left, 400 - (len(customer_dont_pick)) / 53 * 20, max_row,
-                                                       (len(customer_dont_pick)) / 53 * 20)
+                                    read_rect.redo(top_left, 400 - (len(customer_exit)) / 53 * 20, max_row,
+                                                   (len(customer_exit)) / 53 * 20)
                             elif elem in mass_butt:
                                 if mass_butt.index(elem) != act_mass_butt:
                                     mass_butt[act_mass_butt].kill()
@@ -542,10 +555,10 @@ if __name__ == "__main__":
                             direc[3] = True
                     else:
                         if event.key == pg.K_SPACE:
-                            if reading_cust_speech == 2:
+                            if reading_cust_speech == 2 or reading_cust_speech == 3:
                                 read_rect.kill()
                                 read_rect = None
-                            if reading_cust_speech == 0 or reading_cust_speech == 2:
+                            if reading_cust_speech != 1:
                                 if direc_taverna[0] == -1:
                                     direc_taverna[0] = (direc_taverna[1] + 1) % 2
                                     direc_taverna[1] = direc_taverna[0]
@@ -566,9 +579,11 @@ if __name__ == "__main__":
             if event.type == pg.MOUSEBUTTONUP:
                 if gaming:
                     if clicked != Bar and clicked:
-                        if pg.sprite.collide_rect(clicked, tuda_ix):
+                        if (pg.sprite.collide_rect(clicked, tuda_ix) and act_mass_butt == 1) or (
+                                not pg.sprite.collide_rect(clicked,
+                                                           table_or_not) and act_mass_butt == 0 and reading_cust_speech == 1) or (
+                                act_mass_butt == 0 and not (reading_cust_speech == 1 or reading_cust_speech == 4)):
                             clicked.kill()
-                            print(clicked.name)
                             if clicked.name in INGR:
                                 INGR[clicked.name] += 1
                                 cur.execute(
@@ -606,7 +621,62 @@ if __name__ == "__main__":
                                 else:
                                     poti_x += 48
                             con.commit()
-                    clicked = None
+                        elif act_mass_butt == 0:
+                            if customer_want == clicked.name:
+                                print(1)
+                                clicked.kill()
+                                reading_cust_speech = 3
+                                read_rect.redo(top_left, 400 - (len(customer_picked)) / 53 * 20, max_row,
+                                               (len(customer_picked)) / 53 * 20)
+                            elif customer_want != clicked.name:
+                                print(2)
+                                if reading_cust_speech != 4:
+                                    reading_cust_speech = 4
+                                    read_rect.redo(top_left, 400 - (len(customer_dont_pick)) / 53 * 20, max_row,
+                                                   (len(customer_dont_pick)) / 53 * 20)
+                                else:
+                                    reading_cust_speech = 2
+                                    read_rect.redo(top_left, 400 - (len(customer_dont_pick)) / 53 * 20, max_row,
+                                                   (len(customer_dont_pick)) / 53 * 20)
+                                clicked.kill()
+                                if clicked.name in INGR:
+                                    INGR[clicked.name] += 1
+                                    cur.execute(
+                                        f"UPDATE ingridient_player_data SET count = {INGR[clicked.name]} WHERE title = ?",
+                                        (clicked.name,))
+                                elif clicked.name in ingridient_spisok:
+                                    INGR[clicked.name] = 1
+                                    cur.execute(
+                                        f"""INSERT INTO ingridient_player_data VALUES(?, ?, 1)""",
+                                        (id, clicked.name))
+                                    temp = Inridient_photo(840 + ingr_x, 222 + ingr_y, clicked.name)
+                                    ingr_photo.add(temp)
+                                    ingr.append(temp)
+                                    if ingr_x == 100:
+                                        ingr_x = 0
+                                        ingr_y += 48
+                                    else:
+                                        ingr_x += 48
+                                elif clicked.name in POTIONS:
+                                    POTIONS[clicked.name] += 1
+                                    cur.execute(
+                                        f"UPDATE potion_player_data SET count = {POTIONS[clicked.name]} WHERE title = ?",
+                                        (clicked.name,))
+                                elif clicked.name in potion_spisok:
+                                    POTIONS[clicked.name] = 1
+                                    cur.execute(
+                                        f"""INSERT INTO potion_player_data VALUES(?, ?, 1)""",
+                                        (id, clicked.name))
+                                    temp = Inridient_photo(840 + poti_x, 222 + poti_y, clicked.name)
+                                    poti_photo.add(temp)
+                                    poti.append(temp)
+                                    if poti_x == 100:
+                                        poti_x = 0
+                                        poti_y += 48
+                                    else:
+                                        poti_x += 48
+                                con.commit()
+                clicked = None
         screen.fill("black")
         if gaming:
             if act_mass_butt == 1:
@@ -679,7 +749,7 @@ if __name__ == "__main__":
                     direc_taverna[0] = -1
                     if temp == 700:
                         read_rect = Only_rect(top_left, 400 - (len(customer_speech)) / 53 * 20, max_row,
-                                                       (len(customer_speech)) / 53 * 20, "black")
+                                              (len(customer_speech)) / 53 * 20, "black")
                         entities_taverna.add(read_rect)
                         reading_cust_speech = 1
                 entities_taverna.draw(screen)
@@ -734,6 +804,34 @@ if __name__ == "__main__":
                         text = font_customer.render(text_appender, True, "orange")
                         screen.blit(text, (top_left + 5, tyta_y))
                 elif reading_cust_speech == 2:
+                    temp = customer_exit.split()
+                    text_appender = ""
+                    tyta_y = 400 - (len(customer_dont_pick)) / 53 * 20
+                    for elem in temp:
+                        text_appender += elem + ' '
+                        if len(text_appender) >= 53:
+                            text = font_customer.render(text_appender, True, "orange")
+                            screen.blit(text, (top_left + 5, tyta_y))
+                            tyta_y += 20
+                            text_appender = ""
+                    if text_appender:
+                        text = font_customer.render(text_appender, True, "orange")
+                        screen.blit(text, (top_left + 5, tyta_y))
+                elif reading_cust_speech == 3:
+                    temp = customer_picked.split()
+                    text_appender = ""
+                    tyta_y = 400 - (len(customer_picked)) / 53 * 20
+                    for elem in temp:
+                        text_appender += elem + ' '
+                        if len(text_appender) >= 53:
+                            text = font_customer.render(text_appender, True, "orange")
+                            screen.blit(text, (top_left + 5, tyta_y))
+                            tyta_y += 20
+                            text_appender = ""
+                    if text_appender:
+                        text = font_customer.render(text_appender, True, "orange")
+                        screen.blit(text, (top_left + 5, tyta_y))
+                elif reading_cust_speech == 4:
                     temp = customer_dont_pick.split()
                     text_appender = ""
                     tyta_y = 400 - (len(customer_dont_pick)) / 53 * 20
