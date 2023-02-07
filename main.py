@@ -75,7 +75,7 @@ Path = [
     (2.415302671749206, 1.7794136685552076), (2.415302671749206, 1.7794136685552076),
     (2.415302671749206, 1.7794136685552076), (2.415302671749206, 1.7794136685552076),
     (2.4153026717492025, 1.7794136685552076), ]
-poor_dict = {0: ("ingidient_", 840), 1: ("potion_", 927)}
+poor_dict = {0: ("ingidient_", 1040), 1: ("potion_", 1127)}
 poor_mass_dict = {0: ("taverna_", 0), 1: ("laborat_", 50)}
 TEXT = [["Продолжить", 400, 250], ["Новая игра", 400, 350], ["Об игре", 400, 450]]
 WAY_TO_HELL = "image/"
@@ -86,6 +86,8 @@ customer_want = "letUS.png"
 customer_dont_pick = "Ээ ты меня попутал что ли? Я сказал ВОДКИ"
 customer_picked = "Эх за твое здоровье. Ух, сука крепкая"
 customer_exit = "Пошел-ка я отсюда по-добру, по-здорову"
+max_row = 410
+top_left = 580
 
 
 class Actually_only_rect(pg.sprite.Sprite):
@@ -221,7 +223,7 @@ if __name__ == "__main__":
     con = sqlite3.connect(WAY_TO_HELL + "pygame.sqlite")
     cur = con.cursor()
     pg.init()
-    size = width, height = 1000, 700
+    size = width, height = 1200, 700
     screen = pg.display.set_mode(size)
     pg.display.set_caption("Narkotiki")
     clock = pg.time.Clock()
@@ -240,17 +242,15 @@ if __name__ == "__main__":
     kill_map = Map(415, 250, "mapkill.png")
     addiction.add(kill_map)
     addiction.add(map)
-    max_row = 410
-    top_left = 400
-    reading_cust_speech = False
+    reading_cust_speech = 0
     board.add(Boarder(0, 0, width, top_win))
     board.add(Boarder(0, left_win, left_win, height - left_win))
     board.add(Boarder(left_win + win_width, top_win, width - (left_win + win_width), height - top_win))
     board.add(Boarder(left_win, top_win + win_height, width - left_win, height - (top_win + win_height)))
     individ_board = pg.sprite.Group()
-    individ_board.add(Boarder(840, 0, 160, 200))
+    individ_board.add(Boarder(1000, 0, 200, 200))
     entities.add(OnlyImage(400, 417, "chunk.png"))
-    tuda_ix = OnlyImage(840, 200, "rightobject.png")
+    tuda_ix = OnlyImage(1040, 200, "rightobject.png")
     entities.add(tuda_ix)
     tuda_ix_group = pg.sprite.Group()
     tuda_ix_group.add(tuda_ix)
@@ -259,7 +259,7 @@ if __name__ == "__main__":
     temp = Bowl(430, 420)
     entities.add(temp)
     kills = [temp]
-    Bar = bar(988, 222)
+    Bar = bar(1188, 222)
     entities.add(Bar)
     individ_board.add(Bar)
     platforms = []
@@ -322,10 +322,10 @@ if __name__ == "__main__":
         INGR[elem[1]] = elem[2]
     gaming = False
     for elem in INGR:
-        temp = Inridient_photo(840 + temp_x, 222 + temp_y, elem)
+        temp = Inridient_photo(1040 + temp_x, 222 + temp_y, elem)
         ingr_photo.add(temp)
         text = font.render(str(INGR[elem]), True, "black")
-        text_x = 875 + temp_x
+        text_x = 1075 + temp_x
         text_y = 222 + temp_y - (Bar.rect.y - 222)
         ingr.append(temp)
         if temp_x == 100:
@@ -346,10 +346,10 @@ if __name__ == "__main__":
     for elem in result:
         POTIONS[elem[1]] = elem[2]
     for elem in POTIONS:
-        temp = Inridient_photo(840 + temp_x, 222 + temp_y, elem)
+        temp = Inridient_photo(1040 + temp_x, 222 + temp_y, elem)
         poti_photo.add(temp)
         text = font.render(str(POTIONS[elem]), True, "black")
-        text_x = 875 + temp_x
+        text_x = 1075 + temp_x
         text_y = 222 + temp_y - (Bar.rect.y - 222)
         poti.append(temp)
         if temp_x == 100:
@@ -359,6 +359,9 @@ if __name__ == "__main__":
             temp_x += 48
         screen.blit(text, (text_x, text_y))
     poti_x = temp_x
+    no_way_new_red_button = Only_rect(150, 200, 200, 50, "red")
+    no_way_new_text = font_end.render("Я тупой даун.", True, "black")
+    screen.blit(no_way_new_text, (155, 220))
     poti_y = temp_y
     table_or_not = Actually_only_rect(350, 500, 300, 150, "pink")
     for e in addiction:
@@ -367,6 +370,7 @@ if __name__ == "__main__":
     entities_start.add(OnlyImage(0, 0, "backgroundstart.png"))
     entities_start.draw(screen)
     entities_taverna.add(end_dialod_button)
+    entities_taverna.add(no_way_new_red_button)
     pg.display.flip()
     font_text = pg.font.Font(None, 40)
     buttons_start = pg.sprite.Group()
@@ -385,6 +389,8 @@ if __name__ == "__main__":
     pg.display.flip()
     my_mouse = [0, 0]
     timer = 0
+    no_way_new_timer = None
+    arrows = pg.sprite.Group()
     tempopary = pg.sprite.Group()
     path = []
     index = 0
@@ -412,15 +418,10 @@ if __name__ == "__main__":
                         point_group = pg.sprite.Group()
             if event.type == pg.MOUSEBUTTONDOWN:
                 if gaming:
-                    for elem in *entities, *moveGroup, *buttons_group, *ingr_photo, *poti_photo, *mass_butt_group, *move_taverna_group, end_dialod_button:
+                    for elem in *entities, *moveGroup, *buttons_group, *ingr_photo, *poti_photo, *mass_butt_group, *move_taverna_group, end_dialod_button, no_way_new_red_button:
                         if elem.mouse_over(event.pos):
                             mustage = True
-                            if elem == end_dialod_button:
-                                if reading_cust_speech == 1:
-                                    reading_cust_speech = 2
-                                    read_rect.redo(top_left, 400 - (len(customer_exit)) / 53 * 20, max_row,
-                                                   (len(customer_exit)) / 53 * 20)
-                            elif elem in mass_butt:
+                            if elem in mass_butt:
                                 if mass_butt.index(elem) != act_mass_butt:
                                     mass_butt[act_mass_butt].kill()
                                     mass_butt[act_mass_butt] = Inridient_photo(poor_mass_dict[act_mass_butt][1], 0,
@@ -512,7 +513,7 @@ if __name__ == "__main__":
                                             cur.execute(
                                                 f"""INSERT INTO potion_player_data VALUES(?, ?, 1)""",
                                                 (id, could_potion_and.potion))
-                                            temp = Inridient_photo(840 + poti_x, 222 + poti_y, could_potion_and.potion)
+                                            temp = Inridient_photo(1040 + poti_x, 222 + poti_y, could_potion_and.potion)
                                             poti_photo.add(temp)
                                             poti.append(temp)
                                             if poti_x == 100:
@@ -538,6 +539,18 @@ if __name__ == "__main__":
                                     clicked = elem
                                     my_mouse[1] = event.pos[1] - elem.rect.y
                                     my_mouse[0] = event.pos[0] - elem.rect.x
+                            elif not mustage:
+                                if elem == end_dialod_button:
+                                    print(222)
+                                    if reading_cust_speech == 1:
+                                        reading_cust_speech = 2
+                                        read_rect.redo(top_left, 400 - (len(customer_exit)) / 53 * 20, max_row,
+                                                       (len(customer_exit)) / 53 * 20)
+                                elif elem == no_way_new_red_button:
+                                    no_way_new_timer = 0
+                                    print(111)
+                                    arrows.add(OnlyImage(800, 300, "arrow_right.png"))
+                                    arrows.add(OnlyImage(400, 300, "arrow_down.png"))
                 else:
                     for elem in point_group:
                         if buttons_start_vector.index(elem) == 0:
@@ -558,7 +571,7 @@ if __name__ == "__main__":
                             if reading_cust_speech == 2 or reading_cust_speech == 3:
                                 read_rect.kill()
                                 read_rect = None
-                            if reading_cust_speech != 1:
+                            if reading_cust_speech != 1 and reading_cust_speech != 4:
                                 if direc_taverna[0] == -1:
                                     direc_taverna[0] = (direc_taverna[1] + 1) % 2
                                     direc_taverna[1] = direc_taverna[0]
@@ -594,7 +607,7 @@ if __name__ == "__main__":
                                 cur.execute(
                                     f"""INSERT INTO ingridient_player_data VALUES(?, ?, 1)""",
                                     (id, clicked.name))
-                                temp = Inridient_photo(840 + ingr_x, 222 + ingr_y, clicked.name)
+                                temp = Inridient_photo(1040 + ingr_x, 222 + ingr_y, clicked.name)
                                 ingr_photo.add(temp)
                                 ingr.append(temp)
                                 if ingr_x == 100:
@@ -612,7 +625,7 @@ if __name__ == "__main__":
                                 cur.execute(
                                     f"""INSERT INTO potion_player_data VALUES(?, ?, 1)""",
                                     (id, clicked.name))
-                                temp = Inridient_photo(840 + poti_x, 222 + poti_y, clicked.name)
+                                temp = Inridient_photo(1040 + poti_x, 222 + poti_y, clicked.name)
                                 poti_photo.add(temp)
                                 poti.append(temp)
                                 if poti_x == 100:
@@ -649,7 +662,7 @@ if __name__ == "__main__":
                                     cur.execute(
                                         f"""INSERT INTO ingridient_player_data VALUES(?, ?, 1)""",
                                         (id, clicked.name))
-                                    temp = Inridient_photo(840 + ingr_x, 222 + ingr_y, clicked.name)
+                                    temp = Inridient_photo(1040 + ingr_x, 222 + ingr_y, clicked.name)
                                     ingr_photo.add(temp)
                                     ingr.append(temp)
                                     if ingr_x == 100:
@@ -667,7 +680,7 @@ if __name__ == "__main__":
                                     cur.execute(
                                         f"""INSERT INTO potion_player_data VALUES(?, ?, 1)""",
                                         (id, clicked.name))
-                                    temp = Inridient_photo(840 + poti_x, 222 + poti_y, clicked.name)
+                                    temp = Inridient_photo(1040 + poti_x, 222 + poti_y, clicked.name)
                                     poti_photo.add(temp)
                                     poti.append(temp)
                                     if poti_x == 100:
@@ -760,10 +773,10 @@ if __name__ == "__main__":
             if active_button == 0:
                 ingr_photo.draw(screen)
                 for elem in ingr:
-                    elem.rect.x = 840 + temp_x
+                    elem.rect.x = 1040 + temp_x
                     elem.rect.y = 222 - round(Bar.rect.y - 222) + temp_y
                     text = font.render(str(INGR[elem.name]), True, "black")
-                    text_x = 875 + temp_x
+                    text_x = 1075 + temp_x
                     text_y = 222 + temp_y - round(Bar.rect.y - 222)
                     if temp_x == 100:
                         temp_x = 4
@@ -774,10 +787,10 @@ if __name__ == "__main__":
             else:
                 poti_photo.draw(screen)
                 for elem in poti:
-                    elem.rect.x = 840 + temp_x
+                    elem.rect.x = 1040 + temp_x
                     elem.rect.y = 222 - round(Bar.rect.y - 222) + temp_y
                     text = font.render(str(POTIONS[elem.name]), True, "black")
-                    text_x = 875 + temp_x
+                    text_x = 1075 + temp_x
                     text_y = 222 + temp_y - round(Bar.rect.y - 222)
                     if temp_x == 100:
                         temp_x = 4
@@ -789,6 +802,12 @@ if __name__ == "__main__":
             mass_butt_group.draw(screen)
             buttons_group.draw(screen)
             if act_mass_butt == 0:
+                if no_way_new_timer != None:
+                    no_way_new_timer += 1
+                    if no_way_new_timer == 30:
+                        no_way_new_timer = None
+                        for elem in arrows:
+                            elem.kill()
                 if reading_cust_speech == 1:
                     temp = customer_speech.split()
                     text_appender = ""
@@ -846,6 +865,8 @@ if __name__ == "__main__":
                         text = font_customer.render(text_appender, True, "orange")
                         screen.blit(text, (top_left + 5, tyta_y))
                 screen.blit(text_end_dialog, (120, 120))
+                screen.blit(no_way_new_text, (155, 210))
+                arrows.draw(screen)
             if act_mass_butt == 1:
                 moveGroup.draw(screen)
             else:
