@@ -15,23 +15,49 @@ class Customer(pg.sprite):
 '''
 import math
 
-n = int(input())
-A = []
-summ = 0
-for i in range(n):
-    x, y, deg, r = [float(elem) for elem in input().split()]
-    summ += r
-    A.append([x, y, deg, r])
-step = 3
-print('[')
-for elem in A:
-    x, y, deg, r = elem
-    j = 0
-    while j * step < r:
-        x0 = x
-        y0 = y
-        x += math.cos(math.radians(deg)) * step
-        y += math.sin(math.radians(deg)) * step
-        j += 1
-        print(f"({x - x0}, {y - y0}), ", end='')
-print(']')
+
+def do_path(coords):
+    n = len(coords)
+    x = []
+    for elem in coords:
+        x.append(elem)
+    coords = []
+    for i in range(0, n, 2):
+        coords.append([x[i], x[i + 1]])
+    post_x, post_y = coords[0]
+    A = []
+    n = len(coords)
+    for i in range(1, n):
+        r = ((coords[i][0] - post_x) ** 2 + (coords[i][1] - post_y) ** 2) ** 0.5
+        if coords[i][0] - post_x == 0:
+            if coords[i][1] - post_y > 0:
+                sin = 1
+                cos = 0
+            else:
+                sin = -1
+                cos = 0
+        elif coords[i][1] - post_y == 0:
+            if coords[i][1] - post_y > 0:
+                cos = 1
+                sin = 0
+            else:
+                cos = -1
+                sin = 0
+        else:
+            cos = (coords[i][0] - post_x) / r
+            sin = (coords[i][1] - post_y) / r
+        A.append([post_x, post_y, cos, sin, r])
+    step = 3
+    B = []
+    for elem in A:
+        x, y, cos, sin, r = elem
+        j = 0
+        while j * step <= r:
+            x0 = x
+            y0 = y
+            x += cos * step
+            y += sin * step
+            j += 1
+            B.append([x - x0, y - y0])
+    return B
+
