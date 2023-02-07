@@ -1,4 +1,5 @@
 import pygame as pg
+import random
 from ingridient import Ingridient
 from load_image import load_image
 from object import Object
@@ -81,11 +82,7 @@ TEXT = [["Продолжить", 400, 250], ["Новая игра", 400, 350], [
 WAY_TO_HELL = "image/"
 ingridient_spisok = ["letUS.png", "flower1.png"]
 potion_spisok = ["potion_phot.png"]
-customer_speech = "А ну-ка, старина, подкинь-ка мне водочки и давай лей не жалея да похлеще и повеселее. Дайвай-ка я тебе песней наведу. Ух ты травушка-муравушка крепишься..."
-customer_want = "letUS.png"
-customer_dont_pick = "Ээ ты меня попутал что ли? Я сказал ВОДКИ"
-customer_picked = "Эх за твое здоровье. Ух, сука крепкая"
-customer_exit = "Пошел-ка я отсюда по-добру, по-здорову"
+number = 2
 max_row = 410
 top_left = 580
 
@@ -218,7 +215,6 @@ class EndPoint(OnlyImage):
         self.mask = pg.mask.from_surface(self.image)
         self.potion = potion
 
-
 if __name__ == "__main__":
     con = sqlite3.connect(WAY_TO_HELL + "pygame.sqlite")
     cur = con.cursor()
@@ -293,6 +289,8 @@ if __name__ == "__main__":
     text_end = font_end.render("Завершить зелье", True, "black")
     screen.blit(text_end, (100, 600))
     mass_butt = []
+    temp = [*cur.execute("""SELECT * FROM customer  WHERE number = ?""", (random.randint(1, number),))]
+    customer_speech, customer_want, customer_dont_pick, customer_picked, customer_exit = temp[0][1:]
     act_mass_butt = 1
     mass_butt_group = pg.sprite.Group()
     temp = Inridient_photo(poor_mass_dict[0][1], 0, "taverna_passive.png")
@@ -311,7 +309,7 @@ if __name__ == "__main__":
     temp = Inridient_photo(poor_dict[1][1], 100, "potion_passive.png")
     buttons.append(temp)
     buttons_group.add(temp)
-    end_dialod_button = Only_rect(100, 100, 280, 70, "red")
+    end_dialod_button = Only_rect(50, 220, 280, 70, "red")
     text_end_dialog = font_end.render("Закончить диалог", True, "black")
     screen.blit(text_end_dialog, (120, 120))
     ingr_photo = pg.sprite.Group()
@@ -359,7 +357,7 @@ if __name__ == "__main__":
             temp_x += 48
         screen.blit(text, (text_x, text_y))
     poti_x = temp_x
-    no_way_new_red_button = Only_rect(150, 200, 200, 50, "red")
+    no_way_new_red_button = Only_rect(50, 300, 280, 70, "red")
     no_way_new_text = font_end.render("Я тупой даун.", True, "black")
     screen.blit(no_way_new_text, (155, 220))
     poti_y = temp_y
@@ -369,8 +367,9 @@ if __name__ == "__main__":
     entities_start = pg.sprite.Group()
     entities_start.add(OnlyImage(0, 0, "backgroundstart.png"))
     entities_start.draw(screen)
-    entities_taverna.add(end_dialod_button)
-    entities_taverna.add(no_way_new_red_button)
+    dialog_button = pg.sprite.Group()
+    dialog_button.add(end_dialod_button)
+    dialog_button.add(no_way_new_red_button)
     pg.display.flip()
     font_text = pg.font.Font(None, 40)
     buttons_start = pg.sprite.Group()
@@ -418,7 +417,7 @@ if __name__ == "__main__":
                         point_group = pg.sprite.Group()
             if event.type == pg.MOUSEBUTTONDOWN:
                 if gaming:
-                    for elem in *entities, *moveGroup, *buttons_group, *ingr_photo, *poti_photo, *mass_butt_group, *move_taverna_group, end_dialod_button, no_way_new_red_button:
+                    for elem in *entities, *moveGroup, *buttons_group, *ingr_photo, *poti_photo, *mass_butt_group, *move_taverna_group, *dialog_button:
                         if elem.mouse_over(event.pos):
                             mustage = True
                             if elem in mass_butt:
@@ -539,13 +538,13 @@ if __name__ == "__main__":
                                     clicked = elem
                                     my_mouse[1] = event.pos[1] - elem.rect.y
                                     my_mouse[0] = event.pos[0] - elem.rect.x
-                            elif not mustage:
+                            elif not mustage and (reading_cust_speech == 1 or reading_cust_speech == 4):
                                 if elem == end_dialod_button:
                                     print(222)
-                                    if reading_cust_speech == 1:
+                                    if reading_cust_speech == 1 or reading_cust_speech == 4:
                                         reading_cust_speech = 2
-                                        read_rect.redo(top_left, 400 - (len(customer_exit)) / 53 * 20, max_row,
-                                                       (len(customer_exit)) / 53 * 20)
+                                        read_rect.redo(top_left, 400 - (len(customer_exit) + 52) // 53 * 20, max_row,
+                                                       (len(customer_exit) + 52) // 53 * 20)
                                 elif elem == no_way_new_red_button:
                                     no_way_new_timer = 0
                                     print(111)
@@ -571,6 +570,10 @@ if __name__ == "__main__":
                             if reading_cust_speech == 2 or reading_cust_speech == 3:
                                 read_rect.kill()
                                 read_rect = None
+                                temp = [*cur.execute("""SELECT * FROM customer  WHERE number = ?""",
+                                                     (random.randint(1, number),))]
+                                customer_speech, customer_want, customer_dont_pick, customer_picked, customer_exit = \
+                                temp[0][1:]
                             if reading_cust_speech != 1 and reading_cust_speech != 4:
                                 if direc_taverna[0] == -1:
                                     direc_taverna[0] = (direc_taverna[1] + 1) % 2
@@ -639,18 +642,18 @@ if __name__ == "__main__":
                                 print(1)
                                 clicked.kill()
                                 reading_cust_speech = 3
-                                read_rect.redo(top_left, 400 - (len(customer_picked)) / 53 * 20, max_row,
-                                               (len(customer_picked)) / 53 * 20)
+                                read_rect.redo(top_left, 400 - (len(customer_picked) + 52) // 53 * 20, max_row,
+                                               (len(customer_picked) + 52) // 53 * 20)
                             elif customer_want != clicked.name:
                                 print(2)
                                 if reading_cust_speech != 4:
                                     reading_cust_speech = 4
-                                    read_rect.redo(top_left, 400 - (len(customer_dont_pick)) / 53 * 20, max_row,
-                                                   (len(customer_dont_pick)) / 53 * 20)
+                                    read_rect.redo(top_left, 400 - (len(customer_dont_pick) + 52) // 53 * 20, max_row,
+                                                   (len(customer_dont_pick) + 52) // 53 * 20)
                                 else:
                                     reading_cust_speech = 2
-                                    read_rect.redo(top_left, 400 - (len(customer_dont_pick)) / 53 * 20, max_row,
-                                                   (len(customer_dont_pick)) / 53 * 20)
+                                    read_rect.redo(top_left, 400 - (len(customer_dont_pick) + 52) // 53 * 20, max_row,
+                                                   (len(customer_dont_pick) + 52) // 53 * 20)
                                 clicked.kill()
                                 if clicked.name in INGR:
                                     INGR[clicked.name] += 1
@@ -761,10 +764,14 @@ if __name__ == "__main__":
                 if temp == cust.rect.x and direc_taverna[0] != -1:
                     direc_taverna[0] = -1
                     if temp == 700:
-                        read_rect = Only_rect(top_left, 400 - (len(customer_speech)) / 53 * 20, max_row,
-                                              (len(customer_speech)) / 53 * 20, "black")
+                        read_rect = Only_rect(top_left, 400 - (len(customer_speech) + 52) // 53 * 20, max_row,
+                                              (len(customer_speech) + 52) // 53 * 20, "black")
                         entities_taverna.add(read_rect)
                         reading_cust_speech = 1
+                        """
+                        answer_rect = Only_rect(50, 300, 250, 100, "black")
+                        entities_taverna.add(answer_rect)
+                        """
                 entities_taverna.draw(screen)
             if act_mass_butt == 0:
                 tuda_ix_group.draw(screen)
@@ -810,8 +817,11 @@ if __name__ == "__main__":
                             elem.kill()
                 if reading_cust_speech == 1:
                     temp = customer_speech.split()
+                    dialog_button.draw(screen)
+                    screen.blit(text_end_dialog, (70, 240))
+                    screen.blit(no_way_new_text, (90, 320))
                     text_appender = ""
-                    tyta_y = 400 - (len(customer_speech)) / 53 * 20
+                    tyta_y = 402 - (len(customer_speech) + 52) // 53 * 20
                     for elem in temp:
                         text_appender += elem + ' '
                         if len(text_appender) >= 53:
@@ -825,7 +835,7 @@ if __name__ == "__main__":
                 elif reading_cust_speech == 2:
                     temp = customer_exit.split()
                     text_appender = ""
-                    tyta_y = 400 - (len(customer_dont_pick)) / 53 * 20
+                    tyta_y = 402 - (len(customer_exit) + 52) // 53 * 20
                     for elem in temp:
                         text_appender += elem + ' '
                         if len(text_appender) >= 53:
@@ -839,7 +849,7 @@ if __name__ == "__main__":
                 elif reading_cust_speech == 3:
                     temp = customer_picked.split()
                     text_appender = ""
-                    tyta_y = 400 - (len(customer_picked)) / 53 * 20
+                    tyta_y = 402 - (len(customer_picked) + 52) // 53 * 20
                     for elem in temp:
                         text_appender += elem + ' '
                         if len(text_appender) >= 53:
@@ -852,8 +862,11 @@ if __name__ == "__main__":
                         screen.blit(text, (top_left + 5, tyta_y))
                 elif reading_cust_speech == 4:
                     temp = customer_dont_pick.split()
+                    dialog_button.draw(screen)
+                    screen.blit(text_end_dialog, (70, 240))
+                    screen.blit(no_way_new_text, (90, 320))
                     text_appender = ""
-                    tyta_y = 400 - (len(customer_dont_pick)) / 53 * 20
+                    tyta_y = 402 - (len(customer_dont_pick) + 52) // 53 * 20
                     for elem in temp:
                         text_appender += elem + ' '
                         if len(text_appender) >= 53:
@@ -864,8 +877,6 @@ if __name__ == "__main__":
                     if text_appender:
                         text = font_customer.render(text_appender, True, "orange")
                         screen.blit(text, (top_left + 5, tyta_y))
-                screen.blit(text_end_dialog, (120, 120))
-                screen.blit(no_way_new_text, (155, 210))
                 arrows.draw(screen)
             if act_mass_butt == 1:
                 moveGroup.draw(screen)
