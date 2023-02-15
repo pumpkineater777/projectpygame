@@ -45,3 +45,7 @@ class Ingridient(pg.sprite.Sprite):
                 self.rect.bottom = p.rect.top
                 self.vy = 0
 
+    def set_coords(self,x, y):
+        self.rect.x = x
+        self.rect.y = y
+

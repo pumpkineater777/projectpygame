@@ -22,9 +22,16 @@ TEXT = [["Продолжить", 400, 250], ["Новая игра", 400, 350], [
 WAY_TO_HELL = "image/"
 ingridient_spisok = ["letUS.png", "flower1.png"]
 potion_spisok = ["potion_phot.png"]
-number = 2
+number = 3
 max_row = 410
 top_left = 580
+message_group = pg.sprite.Group()
+message_rect = None
+quit_message_rect = None
+button_ok = None
+button_no = None
+number_selling_items = 4
+can_you_click = True
 
 
 class Actually_only_rect(pg.sprite.Sprite):
@@ -156,6 +163,19 @@ class EndPoint(OnlyImage):
         self.potion = potion
 
 
+def create_message_box():
+    global message_rect, quit_message_rect, button_no, button_ok, can_you_click
+    message_rect = Only_rect(200, 200, 600, 400, "brown")
+    quit_message_rect = Only_rect(750, 200, 50, 50, "red")
+    button_ok = Only_rect(300, 500, 100, 50, "green")
+    button_no = Only_rect(600, 500, 100, 50, "red")
+    message_group.add(message_rect)
+    message_group.add(quit_message_rect)
+    message_group.add(button_ok)
+    message_group.add(button_no)
+    can_you_click = False
+
+
 if __name__ == "__main__":
     con = sqlite3.connect(WAY_TO_HELL + "pygame.sqlite")
     cur = con.cursor()
@@ -188,6 +208,9 @@ if __name__ == "__main__":
     individ_board.add(Boarder(1000, 0, 200, 200))
     entities.add(OnlyImage(400, 417, "chunk.png"))
     tuda_ix = OnlyImage(1040, 200, "rightobject.png")
+    money = [*cur.execute("""SELECT money FROM player_data where id_player = ?""", (id,))]
+    money = money[0][0]
+    print(money)
     entities.add(tuda_ix)
     tuda_ix_group = pg.sprite.Group()
     tuda_ix_group.add(tuda_ix)
@@ -231,7 +254,9 @@ if __name__ == "__main__":
     screen.blit(text_end, (100, 600))
     mass_butt = []
     temp = [*cur.execute("""SELECT * FROM customer  WHERE number = ?""", (random.randint(1, number),))]
-    customer_speech, customer_want, customer_dont_pick, customer_picked, customer_exit = temp[0][1:]
+    print(temp)
+    customer_type = temp[0][1]
+    customer_speech, customer_want, customer_dont_pick, customer_picked, customer_exit = temp[0][2:7]
     act_mass_butt = 1
     mass_butt_group = pg.sprite.Group()
     temp = Inridient_photo(poor_mass_dict[0][1], 0, "taverna_passive.png")
@@ -282,6 +307,8 @@ if __name__ == "__main__":
     result = cur.execute(f"""SELECT * FROM potion_player_data
                 WHERE id_player = {id}""").fetchall()
     POTIONS = {}
+    text_message_box = ''
+    font_message_box = pg.font.Font(None, 30)
     for elem in result:
         POTIONS[elem[1]] = elem[2]
     for elem in POTIONS:
@@ -298,7 +325,7 @@ if __name__ == "__main__":
             temp_x += 48
         screen.blit(text, (text_x, text_y))
     poti_x = temp_x
-    no_way_new_red_button = Only_rect(50, 300, 280, 70, "red")
+    No_WaY_nEw_ReD_bUtToN = Only_rect(50, 300, 280, 70, "red")
     no_way_new_text = font_end.render("Я тупой даун.", True, "black")
     screen.blit(no_way_new_text, (155, 220))
     poti_y = temp_y
@@ -310,11 +337,12 @@ if __name__ == "__main__":
     entities_start.draw(screen)
     dialog_button = pg.sprite.Group()
     dialog_button.add(end_dialod_button)
-    dialog_button.add(no_way_new_red_button)
+    dialog_button.add(No_WaY_nEw_ReD_bUtToN)
     pg.display.flip()
     font_text = pg.font.Font(None, 40)
     buttons_start = pg.sprite.Group()
     move_taverna_group = pg.sprite.Group()
+    cust_taverna_group = pg.sprite.Group()
     buttons_start_vector = []
     font_customer = pg.font.Font(None, 20)
     for elem in TEXT:
@@ -335,6 +363,8 @@ if __name__ == "__main__":
     path = []
     index = 0
     read_rect = None
+    font_money = pg.font.Font(None, 40)
+    ingr_demand = None
     while running:
         for event in pg.event.get():
             if event.type == pg.QUIT:
@@ -357,8 +387,8 @@ if __name__ == "__main__":
                     else:
                         point_group = pg.sprite.Group()
             if event.type == pg.MOUSEBUTTONDOWN:
-                if gaming:
-                    for elem in *entities, *moveGroup, *buttons_group, *ingr_photo, *poti_photo, *mass_butt_group, *move_taverna_group, *dialog_button:
+                if gaming and can_you_click:
+                    for elem in *entities, *moveGroup, *buttons_group, *ingr_photo, *poti_photo, *mass_butt_group, *move_taverna_group, *dialog_button, *cust_taverna_group:
                         if elem.mouse_over(event.pos):
                             mustage = True
                             if elem in mass_butt:
@@ -433,7 +463,8 @@ if __name__ == "__main__":
                                             f"""UPDATE potion_player_data SET count = {POTIONS[elem.name]} WHERE title = ?""",
                                             (elem.name,))
                                     con.commit()
-                            elif elem == Bar or elem in move_taverna_group:
+                                can_you_click = True
+                            elif elem == Bar or elem in move_taverna_group or elem in cust_taverna_group:
                                 clicked = elem
                                 my_mouse[1] = event.pos[1] - elem.rect.y
                                 my_mouse[0] = event.pos[0] - elem.rect.x
@@ -462,35 +493,49 @@ if __name__ == "__main__":
                                             else:
                                                 poti_x += 48
                                         con.commit()
-                                        for elem in big_path:
-                                            elem.kill()
+                                        for i in big_path:
+                                            i.kill()
                                         big_path = []
                                         path = []
                                         could_potion_and = False
                                         index = 0
                                 elif elem == discard_button:
+                                    can_you_click = False
+                                    create_message_box()
                                     hero.set_coords(1284, 1284)
-                                    for elem in big_path:
-                                        elem.kill()
+                                    for i in big_path:
+                                        i.kill()
                                     big_path = []
                                     path = []
                                     index = 0
+                                    text_message_box = "Вы хотите сбросить зелье? Все ингридиенты будут утрачены"
                                 elif elem == ruchka or elem in moveGroup:
                                     clicked = elem
                                     my_mouse[1] = event.pos[1] - elem.rect.y
                                     my_mouse[0] = event.pos[0] - elem.rect.x
                             elif not mustage and (reading_cust_speech == 1 or reading_cust_speech == 4):
                                 if elem == end_dialod_button:
-                                    print(222)
                                     if reading_cust_speech == 1 or reading_cust_speech == 4:
                                         reading_cust_speech = 2
                                         read_rect.redo(top_left, 400 - (len(customer_exit) + 52) // 53 * 20, max_row,
                                                        (len(customer_exit) + 52) // 53 * 20)
-                                elif elem == no_way_new_red_button:
+                                        for i in cust_taverna_group:
+                                            i.kill()
+                                elif elem == No_WaY_nEw_ReD_bUtToN:
                                     no_way_new_timer = 0
-                                    print(111)
                                     arrows.add(OnlyImage(800, 300, "arrow_right.png"))
                                     arrows.add(OnlyImage(400, 300, "arrow_down.png"))
+                elif not can_you_click:
+                    if quit_message_rect.mouse_over(event.pos):
+                        for elem in message_group:
+                            elem.kill()
+                        message_rect = None
+                        quit_message_rect = None
+                        can_you_click = True
+                        if ingr_demand:
+                            ingr_demand.set_coords()
+
+                    #if quit-messafe
                 else:
                     for elem in point_group:
                         if buttons_start_vector.index(elem) == 0:
@@ -513,8 +558,9 @@ if __name__ == "__main__":
                                 read_rect = None
                                 temp = [*cur.execute("""SELECT * FROM customer  WHERE number = ?""",
                                                      (random.randint(1, number),))]
+                                customer_type = temp[0][1]
                                 customer_speech, customer_want, customer_dont_pick, customer_picked, customer_exit = \
-                                    temp[0][1:]
+                                    temp[0][2:7]
                             if reading_cust_speech != 1 and reading_cust_speech != 4:
                                 if direc_taverna[0] == -1:
                                     direc_taverna[0] = (direc_taverna[1] + 1) % 2
@@ -540,8 +586,14 @@ if __name__ == "__main__":
                                 not pg.sprite.collide_rect(clicked,
                                                            table_or_not) and act_mass_butt == 0 and reading_cust_speech == 1) or (
                                 act_mass_butt == 0 and not (reading_cust_speech == 1 or reading_cust_speech == 4)):
-                            clicked.kill()
-                            if clicked.name in INGR:
+                            if clicked in cust_taverna_group:
+                                create_message_box()
+                                ingr_money = [
+                                    *cur.execute("SELECT cost FROM ingridient where title = ?", (clicked.name,))]
+                                ingr_money = ingr_money[0][0]
+                                text_message_box = f"Вы хотите купить этот ингридиент за {ingr_money}?"
+                                ingr_demand = clicked
+                            elif clicked.name in INGR:
                                 INGR[clicked.name] += 1
                                 cur.execute(
                                     f"UPDATE ingridient_player_data SET count = {INGR[clicked.name]} WHERE title = ?",
@@ -577,16 +629,16 @@ if __name__ == "__main__":
                                     poti_y += 48
                                 else:
                                     poti_x += 48
+                            if not clicked in cust_taverna_group:
+                                clicked.kill()
                             con.commit()
-                        elif act_mass_butt == 0:
+                        elif act_mass_butt == 0 and customer_type == 0:
                             if customer_want == clicked.name:
-                                print(1)
                                 clicked.kill()
                                 reading_cust_speech = 3
                                 read_rect.redo(top_left, 400 - (len(customer_picked) + 52) // 53 * 20, max_row,
                                                (len(customer_picked) + 52) // 53 * 20)
                             elif customer_want != clicked.name:
-                                print(2)
                                 if reading_cust_speech != 4:
                                     reading_cust_speech = 4
                                     read_rect.redo(top_left, 400 - (len(customer_dont_pick) + 52) // 53 * 20, max_row,
@@ -645,10 +697,9 @@ if __name__ == "__main__":
                         elem.kill()
                 if timer == 50:
                     if (pointed[0] in ingr or pointed[0] in poti):
-                        print(pointed[0].name, *cur.execute("""SELECT pointed_photo FROM ingridient WHERE title = ?""",
-                                                     (pointed[0].name,)))
                         temp = OnlyImage(pointed[0].rect.x - 75, pointed[0].rect.y + 50,
-                                         [*cur.execute("""SELECT pointed_photo FROM ingridient WHERE title = ?""", (pointed[0].name,))][0][0])
+                                         [*cur.execute("""SELECT pointed_photo FROM ingridient WHERE title = ?""",
+                                                       (pointed[0].name,))][0][0])
                         tempopary.add(temp)
                         entities.add(temp)
                 hero.update(direc)
@@ -666,7 +717,8 @@ if __name__ == "__main__":
                             if self != clicked and self.group == "ingr":
                                 self.kill()
                                 temp = cur.execute("""SELECT * FROM ingridient WHERE title = ?""", (self.name,))
-                                name, pointed_photo, path_photo, *spisok = [*temp][0]
+                                name, pointed_photo, path_photo, spisok = [*temp][0]
+                                spisok = [float(elem) for elem in spisok.split('#')]
                                 path.append(do_path(spisok))
                                 temp = OnlyImage(hero.rect.x - 30, hero.rect.y + 10, path_photo)
                                 addiction.add(temp)
@@ -686,6 +738,7 @@ if __name__ == "__main__":
                                 hero.move_coords(path[0][index][0], path[0][index][1])
                                 index += 1
                 elif clicked != None:
+                    print(10)
                     mouse_pos = pg.mouse.get_pos()
                     clicked.update_mouse(mouse_pos, my_mouse)
                 for e in addiction:
@@ -714,6 +767,12 @@ if __name__ == "__main__":
                                               (len(customer_speech) + 52) // 53 * 20, "black")
                         entities_taverna.add(read_rect)
                         reading_cust_speech = 1
+                        if customer_type == 1:
+                            for i in range(number_selling_items):
+                                cust_taverna_group.add(Ingridient(
+                                    random.randint(table_or_not.rect.x, table_or_not.rect.x + table_or_not.rect.width),
+                                    random.randint(table_or_not.rect.y, table_or_not.rect.y + table_or_not.rect.height),
+                                    random.choice(ingridient_spisok), ingr))
                         """
                         answer_rect = Only_rect(50, 300, 250, 100, "black")
                         entities_taverna.add(answer_rect)
@@ -754,6 +813,8 @@ if __name__ == "__main__":
             individ_board.draw(screen)
             mass_butt_group.draw(screen)
             buttons_group.draw(screen)
+            temp = font_money.render(str(money), True, "black")
+            screen.blit(temp, (1100, 20))
             if act_mass_butt == 0:
                 if no_way_new_timer != None:
                     no_way_new_timer += 1
@@ -828,9 +889,31 @@ if __name__ == "__main__":
                 moveGroup.draw(screen)
             else:
                 if clicked != None:
+                    print(111)
                     mouse_pos = pg.mouse.get_pos()
                     clicked.update_mouse(mouse_pos, my_mouse)
                 move_taverna_group.draw(screen)
+                cust_taverna_group.draw(screen)
+            message_group.draw(screen)
+            if not can_you_click:
+                text_appender = ""
+                tyta_y = 300
+                temp = text_message_box.split()
+                typical_left = 250
+                for elem in temp:
+                    text_appender += elem + ' '
+                    if len(text_appender) >= 46:
+                        text = font_message_box.render(text_appender, True, "orange")
+                        screen.blit(text, (typical_left, tyta_y))
+                        tyta_y += 30
+                        text_appender = ""
+                if text_appender:
+                    text = font_message_box.render(text_appender, True, "orange")
+                    screen.blit(text, (typical_left, tyta_y))
+                temp = font_message_box.render("ДА", True, "brown")
+                screen.blit(temp, (330, 515))
+                temp = font_message_box.render("НЕТ", True, "brown")
+                screen.blit(temp, (630, 515))
         else:
             entities_start.draw(screen)
             point_group.draw(screen)

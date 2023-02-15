@@ -46,13 +46,15 @@ def do_path(coords):
         else:
             cos = (coords[i][0] - post_x) / r
             sin = (coords[i][1] - post_y) / r
+        post_x, post_y = coords[i][0], coords[i][1]
         A.append([post_x, post_y, cos, sin, r])
-    step = 3
+    step = 5
     B = []
+    print(A)
     for elem in A:
         x, y, cos, sin, r = elem
         j = 0
-        while j * step <= r:
+        while j <= r / step:
             x0 = x
             y0 = y
             x += cos * step
